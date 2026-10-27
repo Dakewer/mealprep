@@ -1,0 +1,126 @@
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  PUBLIC LAYOUT – Navbar + Main Content + Footer           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- ── Navbar ─────────────────────────────────────────────── -->
+<header class="navbar" [class.navbar--scrolled]="scrolled()">
+  <nav class="navbar__container container" aria-label="Navegación principal">
+
+    <!-- Logo -->
+    <a routerLink="/" class="navbar__logo" (click)="closeMenu()" aria-label="Deficcitto – Inicio">
+      <span class="navbar__logo-icon" aria-hidden="true">🥗</span>
+      <span class="navbar__logo-text">Deficcitto</span>
+    </a>
+
+    <!-- Desktop Nav Links -->
+    <ul class="navbar__links" role="list">
+      <li><a routerLink="/" fragment="features" class="navbar__link">Características</a></li>
+      <li><a routerLink="/" fragment="how-it-works" class="navbar__link">Cómo funciona</a></li>
+      <li><a routerLink="/" fragment="testimonials" class="navbar__link">Testimonios</a></li>
+    </ul>
+
+    <!-- Desktop Auth Buttons -->
+    <div class="navbar__actions">
+      @if (authService.isAuthenticated()) {
+        <a routerLink="/dashboard" class="btn btn--primary btn--sm" appRipple>
+          Dashboard
+        </a>
+      } @else {
+        <a routerLink="/auth/login" class="btn btn--ghost-dark btn--sm">
+          Iniciar sesión
+        </a>
+        <a routerLink="/auth/register" class="btn btn--primary btn--sm">
+          Registro gratis
+        </a>
+      }
+    </div>
+
+    <!-- Mobile Hamburger -->
+    <button
+      class="navbar__hamburger"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="mobile-menu"
+      aria-label="Abrir menú"
+      type="button"
+    >
+      @if (menuOpen()) {
+        <!-- X icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      } @else {
+        <!-- Hamburger icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="6"  x2="21" y2="6"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      }
+    </button>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  @if (menuOpen()) {
+    <div class="navbar__mobile-menu" id="mobile-menu" role="dialog" aria-label="Menú móvil">
+      <ul class="navbar__mobile-links" role="list">
+        <li><a routerLink="/" fragment="features"    class="navbar__mobile-link" (click)="closeMenu()">Características</a></li>
+        <li><a routerLink="/" fragment="how-it-works" class="navbar__mobile-link" (click)="closeMenu()">Cómo funciona</a></li>
+        <li><a routerLink="/" fragment="testimonials" class="navbar__mobile-link" (click)="closeMenu()">Testimonios</a></li>
+      </ul>
+      <div class="navbar__mobile-actions">
+        <a routerLink="/auth/login"    class="btn btn--ghost-dark btn--full" (click)="closeMenu()">Iniciar sesión</a>
+        <a routerLink="/auth/register" class="btn btn--primary btn--full"    (click)="closeMenu()">Registro gratis</a>
+      </div>
+    </div>
+  }
+</header>
+
+<!-- ── Page Content ───────────────────────────────────────── -->
+<main>
+  <router-outlet />
+</main>
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<footer class="footer" aria-label="Pie de página">
+  <div class="footer__container container">
+
+    <div class="footer__brand">
+      <a routerLink="/" class="footer__logo" aria-label="Deficcitto">
+        <span aria-hidden="true">🥗</span>
+        <span>Deficcitto</span>
+      </a>
+      <p class="footer__tagline">
+        Tu plan de comidas inteligente.<br>Macros precisos, resultados reales.
+      </p>
+    </div>
+
+    <nav class="footer__links" aria-label="Enlaces del footer">
+      <div class="footer__col">
+        <h3 class="footer__col-title">Producto</h3>
+        <ul role="list">
+          <li><a routerLink="/" fragment="features"     class="footer__link">Características</a></li>
+          <li><a routerLink="/" fragment="how-it-works" class="footer__link">Cómo funciona</a></li>
+          <li><a routerLink="/auth/register"            class="footer__link">Empezar gratis</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h3 class="footer__col-title">Acceso</h3>
+        <ul role="list">
+          <li><a routerLink="/auth/login"    class="footer__link">Iniciar sesión</a></li>
+          <li><a routerLink="/auth/register" class="footer__link">Crear cuenta</a></li>
+          <li><a routerLink="/dashboard"     class="footer__link">Dashboard</a></li>
+        </ul>
+      </div>
+    </nav>
+
+  </div>
+
+  <div class="footer__bottom">
+    <div class="container">
+      <p class="footer__copy">&copy; 2026 Deficcitto. Proyecto académico – Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>
