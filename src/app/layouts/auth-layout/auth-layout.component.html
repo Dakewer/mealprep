@@ -1,0 +1,65 @@
+<div class="auth-layout" role="main">
+
+  <!-- ── Left Brand Panel ────────────────────────────────── -->
+  <aside class="auth-layout__brand" aria-label="Información de marca">
+    <!-- Background blobs -->
+    <div class="auth-layout__blob auth-layout__blob--1" aria-hidden="true"></div>
+    <div class="auth-layout__blob auth-layout__blob--2" aria-hidden="true"></div>
+
+    <div class="auth-layout__brand-content">
+      <!-- Logo -->
+      <a routerLink="/" class="auth-layout__logo" aria-label="Ir a inicio">
+        <span aria-hidden="true">🥗</span>
+        <span>Deficcitto</span>
+      </a>
+
+      <h2 class="auth-layout__headline">
+        Planifica tus comidas.<br>
+        <span class="auth-layout__headline--accent">Transforma tu cuerpo.</span>
+      </h2>
+
+      <p class="auth-layout__description">
+        La herramienta definitiva para calcular macros, diseñar planes semanales y generar listas de compra personalizadas.
+      </p>
+
+      <!-- Feature bullets -->
+      <ul class="auth-layout__features" role="list">
+        <li class="auth-layout__feature">
+          <span class="auth-layout__feature-icon" aria-hidden="true">🎯</span>
+          <div>
+            <strong>Macros al gramo</strong>
+            <p>Precisión total con sliders reactivos</p>
+          </div>
+        </li>
+        <li class="auth-layout__feature">
+          <span class="auth-layout__feature-icon" aria-hidden="true">⚡</span>
+          <div>
+            <strong>Tiempo real</strong>
+            <p>Cálculos instantáneos al ajustar porciones</p>
+          </div>
+        </li>
+        <li class="auth-layout__feature">
+          <span class="auth-layout__feature-icon" aria-hidden="true">🛒</span>
+          <div>
+            <strong>Lista de compras</strong>
+            <p>Generación automática por semana</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- ── Right Form Panel ────────────────────────────────── -->
+  <section class="auth-layout__form-panel" aria-label="Formulario de acceso">
+    <div class="auth-layout__form-wrapper">
+      <!-- Mobile logo -->
+      <a routerLink="/" class="auth-layout__mobile-logo" aria-label="Ir a inicio">
+        <span aria-hidden="true">🥗</span>
+        <span>Deficcitto</span>
+      </a>
+
+      <router-outlet />
+    </div>
+  </section>
+
+</div>

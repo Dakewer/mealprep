@@ -1,0 +1,35 @@
+<section
+  class="toast-container"
+  aria-live="polite"
+  aria-atomic="false"
+  aria-label="Notificaciones"
+>
+  @for (notif of notifications; track trackById($index, notif)) {
+    <article class="toast toast--{{ notif.type }}" role="alert">
+      <div class="toast__icon" [innerHTML]="getIcon(notif.type)"></div>
+
+      <div class="toast__body">
+        @if (notif.title) {
+          <p class="toast__title">{{ notif.title }}</p>
+        }
+        <p class="toast__message">{{ notif.message }}</p>
+      </div>
+
+      <button
+        class="toast__close"
+        (click)="dismiss(notif.id)"
+        aria-label="Cerrar notificación"
+        type="button"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="toast__progress"></div>
+    </article>
+  }
+</section>

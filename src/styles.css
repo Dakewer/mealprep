@@ -1,1 +1,317 @@
-/* You can add global styles to this file, and also import other style files */
+/* ============================================================
+   DEFICCITTO – Global Styles & Design Tokens
+   ============================================================ */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Inter+Tight:wght@700;800;900&display=swap');
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+  /* Primary – Forest Green (salud, frescura) */
+  --clr-primary-50:  #f0fdf4;
+  --clr-primary-100: #dcfce7;
+  --clr-primary-300: #86efac;
+  --clr-primary-400: #4ade80;
+  --clr-primary-500: #22c55e;
+  --clr-primary-600: #16a34a;
+  --clr-primary-700: #15803d;
+  --clr-primary-800: #166534;
+
+  /* Secondary – Energy Orange (energía, vitalidad) */
+  --clr-secondary-400: #fb923c;
+  --clr-secondary-500: #f97316;
+  --clr-secondary-600: #ea580c;
+
+  /* Neutral Dark (fondos oscuros del app) */
+  --clr-dark-950: #030712;
+  --clr-dark-900: #0a0f14;
+  --clr-dark-800: #111827;
+  --clr-dark-700: #1f2937;
+  --clr-dark-600: #374151;
+  --clr-dark-500: #4b5563;
+
+  /* Neutral Light (fondos claros) */
+  --clr-light-50:  #f9fafb;
+  --clr-light-100: #f3f4f6;
+  --clr-light-200: #e5e7eb;
+  --clr-light-300: #d1d5db;
+
+  /* Semantic */
+  --clr-success: #22c55e;
+  --clr-error:   #ef4444;
+  --clr-warning: #f59e0b;
+  --clr-info:    #3b82f6;
+
+  /* Text */
+  --text-on-dark:   #f9fafb;
+  --text-on-dark-2: #9ca3af;
+  --text-on-dark-3: #6b7280;
+  --text-on-light:  #111827;
+  --text-on-light-2:#374151;
+  --text-on-light-3:#6b7280;
+
+  /* Typography */
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Inter Tight', var(--font-sans);
+
+  /* Border radius */
+  --radius-xs:   0.25rem;
+  --radius-sm:   0.375rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-xl:   1rem;
+  --radius-2xl:  1.5rem;
+  --radius-3xl:  2rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.07);
+  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.12), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.08);
+  --shadow-glow-green:  0 0 30px rgb(34 197 94 / 0.25);
+  --shadow-glow-orange: 0 0 30px rgb(249 115 22 / 0.25);
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-base:   250ms ease;
+  --transition-slow:   400ms ease;
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Layout */
+  --container-max: 1200px;
+  --container-pad: clamp(1rem, 4vw, 2rem);
+}
+
+/* ── Reset & Base ──────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text-on-light);
+  background-color: var(--clr-light-50);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img, svg, video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+/* ── Ripple Animation ─────────────────────────────────────── */
+@keyframes ripple-effect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ── Utility: Container ───────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
+}
+
+/* ── Utility: Button System ───────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+}
+
+.btn:active { transform: scale(0.97); }
+.btn:focus-visible {
+  outline: 2px solid var(--clr-primary-500);
+  outline-offset: 3px;
+}
+
+.btn--primary {
+  background-color: var(--clr-primary-600);
+  color: #fff;
+  border-color: var(--clr-primary-600);
+}
+.btn--primary:hover {
+  background-color: var(--clr-primary-700);
+  border-color: var(--clr-primary-700);
+  box-shadow: var(--shadow-glow-green);
+}
+
+.btn--secondary {
+  background-color: var(--clr-secondary-500);
+  color: #fff;
+  border-color: var(--clr-secondary-500);
+}
+.btn--secondary:hover {
+  background-color: var(--clr-secondary-600);
+  border-color: var(--clr-secondary-600);
+  box-shadow: var(--shadow-glow-orange);
+}
+
+.btn--outline {
+  background-color: transparent;
+  color: var(--clr-primary-600);
+  border-color: var(--clr-primary-600);
+}
+.btn--outline:hover {
+  background-color: var(--clr-primary-50);
+}
+
+.btn--ghost {
+  background-color: transparent;
+  color: var(--text-on-dark);
+  border-color: rgb(255 255 255 / 0.25);
+}
+.btn--ghost:hover {
+  background-color: rgb(255 255 255 / 0.1);
+  border-color: rgb(255 255 255 / 0.5);
+}
+
+.btn--ghost-dark {
+  background-color: transparent;
+  color: var(--text-on-light-2);
+  border-color: var(--clr-light-300);
+}
+.btn--ghost-dark:hover {
+  background-color: var(--clr-light-100);
+  border-color: var(--clr-light-300);
+}
+
+.btn--sm  { padding: 0.4rem 0.875rem; font-size: 0.8125rem; }
+.btn--lg  { padding: 0.8rem 1.75rem;  font-size: 1rem; }
+.btn--xl  { padding: 1rem 2.25rem;    font-size: 1.0625rem; }
+.btn--full{ width: 100%; }
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Utility: Form Controls ───────────────────────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-on-light-2);
+}
+
+.form-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input-icon {
+  position: absolute;
+  left: 0.875rem;
+  color: var(--text-on-light-3);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid var(--clr-light-300);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  color: var(--text-on-light);
+  font-size: 0.9375rem;
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+  outline: none;
+}
+
+.form-input.has-icon { padding-left: 2.75rem; }
+.form-input.has-action { padding-right: 3rem; }
+
+.form-input:focus {
+  border-color: var(--clr-primary-500);
+  box-shadow: 0 0 0 3px rgb(34 197 94 / 0.15);
+}
+
+.form-input.is-invalid {
+  border-color: var(--clr-error);
+}
+.form-input.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 0.15);
+}
+
+.form-error {
+  font-size: 0.8rem;
+  color: var(--clr-error);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.form-hint {
+  font-size: 0.8rem;
+  color: var(--text-on-light-3);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--clr-dark-600);
+  border-radius: var(--radius-full);
+}

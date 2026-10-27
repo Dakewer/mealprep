@@ -1,0 +1,276 @@
+<!-- ═══════════════════════════════════════════════════════════
+     LANDING PAGE – Deficcitto
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- ══ 1. HERO ════════════════════════════════════════════════ -->
+<section class="hero" aria-label="Inicio">
+  <!-- Decorative blobs -->
+  <div class="hero__blob hero__blob--green"  aria-hidden="true"></div>
+  <div class="hero__blob hero__blob--orange" aria-hidden="true"></div>
+
+  <div class="hero__container container">
+    <!-- Left: Copy + CTAs -->
+    <div class="hero__copy">
+      <div class="hero__badge" aria-label="Planificación inteligente de comidas">
+        <span aria-hidden="true">🥗</span> Planificación inteligente de comidas
+      </div>
+
+      <h1 class="hero__title">
+        Tu plan de comidas.<br>
+        <span class="hero__title--accent">Tu cuerpo.</span><br>
+        Tu control.
+      </h1>
+
+      <p class="hero__subtitle">
+        Calcula macros con precisión, diseña tu plan semanal y genera listas
+        de compra automáticas adaptadas a tu gasto calórico real.
+      </p>
+
+      <div class="hero__actions">
+        <a routerLink="/auth/register" class="btn btn--primary btn--xl" appRipple>
+          Comenzar gratis
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </a>
+        <a routerLink="/auth/login" class="btn btn--ghost btn--xl">
+          Iniciar sesión
+        </a>
+      </div>
+
+      <p class="hero__disclaimer">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        Sin tarjeta de crédito &nbsp;·&nbsp; Sin anuncios &nbsp;·&nbsp; 100% gratis
+      </p>
+    </div>
+
+    <!-- Right: Macro card preview -->
+    <div class="hero__visual" aria-label="Vista previa de tarjeta de macros" role="img">
+      <div class="macro-card">
+        <!-- Card header -->
+        <div class="macro-card__header">
+          <div>
+            <p class="macro-card__label">Plan del Día</p>
+            <p class="macro-card__date">Lunes · Definición</p>
+          </div>
+          <span class="macro-card__badge">En curso</span>
+        </div>
+
+        <!-- Macro bars -->
+        <div class="macro-card__macros">
+          <div class="macro-item">
+            <div class="macro-item__header">
+              <span class="macro-item__name">💪 Proteínas</span>
+              <span class="macro-item__values">144g <span class="macro-item__total">/ 200g</span></span>
+            </div>
+            <div class="macro-item__bar" role="progressbar" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100" aria-label="Proteínas 72%">
+              <div class="macro-item__fill macro-item__fill--protein" [style.width.%]="proteinPercent()"></div>
+            </div>
+          </div>
+
+          <div class="macro-item">
+            <div class="macro-item__header">
+              <span class="macro-item__name">🌾 Carbohidratos</span>
+              <span class="macro-item__values">174g <span class="macro-item__total">/ 300g</span></span>
+            </div>
+            <div class="macro-item__bar" role="progressbar" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100" aria-label="Carbohidratos 58%">
+              <div class="macro-item__fill macro-item__fill--carbs" [style.width.%]="carbsPercent()"></div>
+            </div>
+          </div>
+
+          <div class="macro-item">
+            <div class="macro-item__header">
+              <span class="macro-item__name">🥑 Grasas</span>
+              <span class="macro-item__values">31g <span class="macro-item__total">/ 70g</span></span>
+            </div>
+            <div class="macro-item__bar" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" aria-label="Grasas 45%">
+              <div class="macro-item__fill macro-item__fill--fat" [style.width.%]="fatPercent()"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calorie ring summary -->
+        <div class="macro-card__calories">
+          <div class="calorie-ring" aria-label="Calorías consumidas">
+            <svg viewBox="0 0 80 80" width="80" height="80" aria-hidden="true">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+              <circle cx="40" cy="40" r="32" fill="none" stroke="url(#calGrad)" stroke-width="8"
+                stroke-dasharray="201" stroke-dashoffset="85" stroke-linecap="round"
+                transform="rotate(-90 40 40)"/>
+              <defs>
+                <linearGradient id="calGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%"   stop-color="#22c55e"/>
+                  <stop offset="100%" stop-color="#f97316"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="calorie-ring__text">
+              <span class="calorie-ring__value">1,512</span>
+              <span class="calorie-ring__unit">kcal</span>
+            </div>
+          </div>
+          <div class="macro-card__cal-info">
+            <p class="macro-card__cal-goal">Meta: 2,200 kcal</p>
+            <p class="macro-card__cal-remaining">688 kcal restantes</p>
+            <div class="macro-card__cal-bar">
+              <div class="macro-card__cal-fill" style="width: 68.7%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating badge -->
+      <div class="hero__floating-badge" aria-hidden="true">
+        <span>🔥</span>
+        <div>
+          <p class="hero__floating-badge-title">TDEE calculado</p>
+          <p class="hero__floating-badge-value">2,200 kcal / día</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 2. STATS BAR ══════════════════════════════════════════ -->
+<section class="stats" aria-label="Estadísticas de la plataforma">
+  <div class="stats__container container">
+    @for (stat of stats; track stat.label) {
+      <div class="stats__item">
+        <span class="stats__icon" aria-hidden="true">{{ stat.icon }}</span>
+        <div>
+          <p class="stats__value">{{ stat.value }}</p>
+          <p class="stats__label">{{ stat.label }}</p>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ══ 3. FEATURES ════════════════════════════════════════════ -->
+<section class="features" id="features" aria-labelledby="features-title">
+  <div class="features__container container">
+    <header class="section-header">
+      <p class="section-header__eyebrow">¿Por qué Deficcitto?</p>
+      <h2 class="section-header__title" id="features-title">
+        Todo lo que necesitas<br>para dominar tu nutrición
+      </h2>
+      <p class="section-header__subtitle">
+        Diseñado para atletas, fitness enthusiasts y cualquier persona que
+        quiera llevar su alimentación al siguiente nivel.
+      </p>
+    </header>
+
+    <ul class="features__grid" role="list">
+      @for (feature of features; track feature.title) {
+        <li class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">{{ feature.icon }}</div>
+          <h3 class="feature-card__title">{{ feature.title }}</h3>
+          <p class="feature-card__description">{{ feature.description }}</p>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- ══ 4. HOW IT WORKS ════════════════════════════════════════ -->
+<section class="how-it-works" id="how-it-works" aria-labelledby="hiw-title">
+  <div class="how-it-works__container container">
+    <header class="section-header">
+      <p class="section-header__eyebrow">Proceso simple</p>
+      <h2 class="section-header__title" id="hiw-title">
+        Así funciona Deficcitto
+      </h2>
+      <p class="section-header__subtitle">
+        En tres pasos sencillos tendrás tu plan nutricional personalizado y
+        tu lista de compras lista para el supermercado.
+      </p>
+    </header>
+
+    <ol class="steps" aria-label="Pasos para empezar">
+      @for (step of steps; track step.number) {
+        <li class="step">
+          <div class="step__number" aria-hidden="true">{{ step.number }}</div>
+          <div class="step__icon" aria-hidden="true">{{ step.icon }}</div>
+          <h3 class="step__title">{{ step.title }}</h3>
+          <p class="step__description">{{ step.description }}</p>
+        </li>
+      }
+    </ol>
+
+    <div class="how-it-works__cta">
+      <a routerLink="/auth/register" class="btn btn--primary btn--lg" appRipple>
+        Empezar ahora – Es gratis
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5. TESTIMONIALS ════════════════════════════════════════ -->
+<section class="testimonials" id="testimonials" aria-labelledby="testimonials-title">
+  <div class="testimonials__container container">
+    <header class="section-header">
+      <p class="section-header__eyebrow">Testimonios</p>
+      <h2 class="section-header__title" id="testimonials-title">
+        Lo que dicen nuestros usuarios
+      </h2>
+    </header>
+
+    <ul class="testimonials__grid" role="list">
+      @for (testimonial of testimonials; track testimonial.name) {
+        <li class="testimonial-card">
+          <div class="testimonial-card__stars" aria-label="{{ testimonial.rating }} estrellas de 5">
+            @for (star of getStars(testimonial.rating); track $index) {
+              <span aria-hidden="true">{{ star }}</span>
+            }
+          </div>
+          <blockquote class="testimonial-card__quote">
+            "{{ testimonial.quote }}"
+          </blockquote>
+          <div class="testimonial-card__author">
+            <div class="testimonial-card__avatar"
+              [style.background-color]="testimonial.color"
+              aria-hidden="true">
+              {{ testimonial.initials }}
+            </div>
+            <div>
+              <p class="testimonial-card__name">{{ testimonial.name }}</p>
+              <p class="testimonial-card__role">{{ testimonial.role }}</p>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- ══ 6. FINAL CTA ═══════════════════════════════════════════ -->
+<section class="cta-banner" aria-labelledby="cta-title">
+  <div class="cta-banner__blob cta-banner__blob--1" aria-hidden="true"></div>
+  <div class="cta-banner__blob cta-banner__blob--2" aria-hidden="true"></div>
+
+  <div class="cta-banner__container container">
+    <h2 class="cta-banner__title" id="cta-title">
+      ¿Listo para transformar tu alimentación?
+    </h2>
+    <p class="cta-banner__subtitle">
+      Únete a más de 1,200 personas que ya planifican sus comidas con inteligencia.
+      Gratis, sin tarjeta, sin excusas.
+    </p>
+    <div class="cta-banner__actions">
+      <a routerLink="/auth/register" class="btn btn--primary btn--xl" appRipple>
+        Crear cuenta gratis
+      </a>
+      <a routerLink="/auth/login" class="btn btn--ghost btn--xl">
+        Ya tengo cuenta
+      </a>
+    </div>
+  </div>
+</section>

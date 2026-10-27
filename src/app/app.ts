@@ -1,12 +1,17 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NotificationToastComponent } from './shared/components/notification-toast/notification-toast.component';
 
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
-  styleUrl: './app.css',
-  templateUrl: './app.html',
+  standalone: true,
+  imports: [RouterOutlet, NotificationToastComponent],
+  template: `
+    <!-- Global toast notifications -->
+    <app-notification-toast />
+    <!-- Routed pages -->
+    <router-outlet />
+  `,
+  styles: [':host { display: block; }'],
 })
-export class App {
-  protected readonly title = signal('MealPrep');
-}
+export class App {}
