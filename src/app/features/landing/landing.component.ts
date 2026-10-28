@@ -49,94 +49,103 @@ export class LandingComponent {
 
   features: Feature[] = [
     {
-      icon: '🎯',
-      title: 'Macros al gramo',
+      icon: '🥑',
+      title: 'Come rico sin complicaciones',
       description:
-        'Calcula proteínas, carbohidratos y grasas con precisión milimétrica usando ingredientes reales. Sin aproximaciones, sin olvidos.',
+        'Olvídate de dietas extremas o aburridas. Diseña comidas deliciosas y balanceadas que se adapten a tu ritmo de vida real.',
     },
     {
-      icon: '⚡',
-      title: 'Sliders reactivos',
+      icon: '⏱️',
+      title: 'Ahorra horas cada semana',
       description:
-        'Ajusta porciones y observa cómo todos tus macros y calorías se actualizan instantáneamente. Control total en tiempo real.',
+        'Deja de preguntarte "¿qué cocino hoy?". Organiza tus comidas con anticipación y recupera tu tiempo libre.',
     },
     {
-      icon: '🧮',
-      title: 'TDEE personalizado',
+      icon: '💰',
+      title: 'Cero comida desperdiciada',
       description:
-        'Calculamos tu gasto calórico diario con la fórmula Mifflin-St Jeor adaptada a tu nivel de actividad, edad, peso y estatura.',
+        'Compra únicamente las cantidades exactas que vas a consumir. Cuida tu bolsillo y dile adiós a los ingredientes olvidados en el refrigerador.',
     },
     {
       icon: '🛒',
-      title: 'Lista de compras',
+      title: 'Lista de compras al instante',
       description:
-        'Genera automáticamente tu lista de supermercado con cantidades exactas. Tilda los ingredientes mientras compras.',
+        'Genera automáticamente tu lista de compras organizada para el supermercado. Marca los productos conforme los pones en tu carrito.',
     },
     {
-      icon: '📅',
-      title: 'Planificación semanal',
+      icon: '🎯',
+      title: 'Control simple de porciones',
       description:
-        'Distribuye tus comidas a lo largo de la semana y asegura variedad nutricional sin exceder tu déficit o superávit.',
+        'Ajusta lo que comes con controles visuales e intuitivos. Sin cálculos matemáticos raros ni fórmulas difíciles de entender.',
     },
     {
-      icon: '❤️',
-      title: 'Favoritos y exclusiones',
+      icon: '🍱',
+      title: 'Comidas variadas y prácticas',
       description:
-        'Guarda tus alimentos favoritos y excluye ingredientes según alergias o preferencias. El sistema lo recuerda todo.',
+        'Combina tus alimentos e ingredientes favoritos para que disfrutes cada comida sin caer en la monotonía.',
     },
   ];
 
   steps: Step[] = [
     {
       number: '01',
-      icon: '👤',
-      title: 'Crea tu perfil',
+      icon: '📝',
+      title: 'Cuéntanos tu meta',
       description:
-        'Ingresa tu edad, peso, estatura y nivel de actividad. Calculamos tu TDEE de forma automática con la fórmula Mifflin-St Jeor.',
+        'Ingresa tus datos básicos y lo que buscas lograr: comer más sano, mantenerte en tu peso o tener más energía durante el día.',
     },
     {
       number: '02',
-      icon: '⚙️',
-      title: 'Configura tus macros',
+      icon: '🥗',
+      title: 'Arma tu menú de la semana',
       description:
-        'Usa nuestros sliders reactivos para distribuir proteínas, carbohidratos y grasas según tu objetivo: déficit, mantenimiento o superávit.',
+        'Elige tus ingredientes favoritos y ajusta tus comidas de forma visual con sliders intuitivos que calculan todo por ti.',
     },
     {
       number: '03',
       icon: '🛒',
-      title: 'Genera tu lista',
+      title: 'Haz el súper y disfruta',
       description:
-        'Con un clic, Deficcitto crea tu lista de compras semanal con cantidades exactas de cada ingrediente. ¡Listo para el súper!',
+        'Descarga tu lista de compras exacta con un clic. Cocina una o dos veces por semana y ten tus comidas listas sin estrés.',
     },
   ];
 
   testimonials: Testimonial[] = [
     {
-      initials: 'CM',
-      name: 'Carlos Martínez',
-      role: 'Atleta aficionado',
+      initials: 'SV',
+      name: 'Sofía Valenzuela',
+      role: 'Mamá y profesionista',
       quote:
-        '¡Increíble! Por fin una app que me calcula exactamente cuántos gramos de pollo y arroz necesito. Bajé 8 kg en 3 meses sin esfuerzo extra.',
+        'Trabajo todo el día y siempre terminaba pidiendo delivery. Con Deficcitto resuelvo mis comidas de lunes a viernes en un par de horas el domingo. ¡Ahorro tiempo y dinero!',
       rating: 5,
       color: '#22c55e',
     },
     {
-      initials: 'LR',
-      name: 'Laura Rodríguez',
-      role: 'Nutrióloga',
+      initials: 'MT',
+      name: 'Miguel Ángel Torres',
+      role: 'Trabajador remoto',
       quote:
-        'Recomiendo Deficcitto a todos mis pacientes. La precisión de los cálculos es sorprendente y la interfaz es muy intuitiva.',
+        'Siempre compraba cosas en el supermercado que terminaban echándose a perder. La lista de compras exacta me redujo el gasto un 30% y ahora como mucho mejor.',
       rating: 5,
       color: '#f97316',
     },
     {
-      initials: 'AP',
-      name: 'Andrés Peña',
-      role: 'Entrenador personal',
+      initials: 'MG',
+      name: 'Mariana Gómez',
+      role: 'Estudiante universitaria',
       quote:
-        'La lista de compras automática le cambia la vida a mis clientes. Ya no hay excusas para no seguir el plan nutricional.',
+        'Pensaba que comer bien era carísimo y complicado. La app me enseñó a armar platos equilibrados con comida normal de todos los días y sin pasar hambre.',
       rating: 5,
       color: '#3b82f6',
+    },
+    {
+      initials: 'DH',
+      name: 'David Herrera',
+      role: 'Oficinista',
+      quote:
+        'Bajé 6 kilos en dos meses sin sentir que estaba a dieta. Saber exactamente qué porciones servirme sin complicarme la vida fue la clave.',
+      rating: 5,
+      color: '#a855f7',
     },
   ];
 
