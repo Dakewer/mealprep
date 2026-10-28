@@ -1,0 +1,322 @@
+<div class="features-view">
+  <!-- ══ HERO (Dark, identical to Landing hero) ═══════════════ -->
+  <header class="features-hero">
+    <div class="features-hero__blob features-hero__blob--green"  aria-hidden="true"></div>
+    <div class="features-hero__blob features-hero__blob--orange" aria-hidden="true"></div>
+
+    <div class="container features-hero__container">
+      <div class="features-hero__badge">
+        <span aria-hidden="true">✨</span> Todo en un solo lugar
+      </div>
+      <h1 class="features-hero__title">
+        Herramientas pensadas para<br>
+        <span class="features-hero__title--accent">simplificar tu vida</span>
+      </h1>
+      <p class="features-hero__subtitle">
+        Diseñado para personas reales con poco tiempo: olvídate del estrés de pensar qué cocinar, ahorra en el supermercado y come rico todos los días.
+      </p>
+    </div>
+  </header>
+
+  <!-- ══ MAIN CONTENT (Clean Light Background) ═════════════════ -->
+  <main class="features-main">
+    <div class="container">
+      <!-- ══ 1. SIMULADOR INTERACTIVO DE AHORRO ════════════════ -->
+      <section class="calc-section" aria-labelledby="calc-title">
+        <div class="calc-card">
+          <div class="calc-card__header">
+            <span class="eyebrow-tag">📊 Simulador en vivo</span>
+            <h2 id="calc-title" class="calc-card__title">¿Cuánto puedes ahorrar con Deficcitto?</h2>
+            <p class="calc-card__desc">
+              Calcula cuánto dinero y tiempo recuperas al reemplazar la comida rápida o compras improvisadas por un plan organizado.
+            </p>
+          </div>
+
+          <div class="calc-grid">
+            <!-- Controles -->
+            <div class="calc-controls">
+              <div class="control-group">
+                <label class="control-label">¿Para quién cocinas?</label>
+                <div class="segmented-control" role="group" aria-label="Tamaño del hogar">
+                  <button
+                    type="button"
+                    class="segmented-btn"
+                    [class.segmented-btn--active]="householdType() === 'solo'"
+                    (click)="setHousehold('solo')"
+                  >
+                    👤 Solo para mí
+                  </button>
+                  <button
+                    type="button"
+                    class="segmented-btn"
+                    [class.segmented-btn--active]="householdType() === 'couple'"
+                    (click)="setHousehold('couple')"
+                  >
+                    👥 En pareja
+                  </button>
+                  <button
+                    type="button"
+                    class="segmented-btn"
+                    [class.segmented-btn--active]="householdType() === 'family'"
+                    (click)="setHousehold('family')"
+                  >
+                    👨‍👩‍👧 Familia (4)
+                  </button>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <div class="range-header">
+                  <label for="delivery-range" class="control-label">Comidas compradas fuera o pedidas por semana:</label>
+                  <span class="range-val">{{ deliveryMealsPerWeek() }} veces / semana</span>
+                </div>
+                <input
+                  id="delivery-range"
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  [ngModel]="deliveryMealsPerWeek()"
+                  (ngModelChange)="deliveryMealsPerWeek.set($event)"
+                  class="custom-slider"
+                />
+                <div class="range-scale">
+                  <span>1 vez</span>
+                  <span>5 veces</span>
+                  <span>10 veces</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resultados dinámicos -->
+            <div class="calc-results">
+              <div class="result-box result-box--accent">
+                <span class="result-icon">💵</span>
+                <div class="result-content">
+                  <span class="result-number">${{ monthlySavings() | number }}</span>
+                  <span class="result-unit">MXN estimados / mes</span>
+                  <p class="result-text">Ahorro neto al sustituir pedidos de delivery por compras exactas en el súper.</p>
+                </div>
+              </div>
+
+              <div class="result-row">
+                <div class="result-box">
+                  <span class="result-icon">⏱️</span>
+                  <div>
+                    <span class="result-number">{{ hoursSavedPerMonth() }} hrs</span>
+                    <p class="result-text">Tiempo libre recuperado al mes sin cocinar diario.</p>
+                  </div>
+                </div>
+
+                <div class="result-box">
+                  <span class="result-icon">🥗</span>
+                  <div>
+                    <span class="result-number">{{ wasteReducedKg() }} kg</span>
+                    <p class="result-text">Menos comida echada a perder en tu refrigerador.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ 2. DEMOSTRADOR DE PORCIONES ═══════════════════════ -->
+      <section class="portion-section" aria-labelledby="portion-title">
+        <div class="portion-card">
+          <div class="portion-header">
+            <span class="eyebrow-tag">🥑 Nutrición visual</span>
+            <h2 id="portion-title" class="portion-title">Sliders reactivos: Porciones sin quebraderos de cabeza</h2>
+            <p class="portion-desc">
+              Mueve las calorías de tu día y observa cómo Deficcitto traduce la energía en porciones de comida real automáticamente.
+            </p>
+          </div>
+
+          <div class="portion-interactive">
+            <div class="portion-slider-box">
+              <div class="portion-slider-header">
+                <label for="cal-range" class="control-label">Tu meta calórica aproximada:</label>
+                <span class="cal-highlight">{{ calorieTarget() | number }} kcal / día</span>
+              </div>
+              <input
+                id="cal-range"
+                type="range"
+                min="1400"
+                max="3200"
+                step="50"
+                [ngModel]="calorieTarget()"
+                (ngModelChange)="calorieTarget.set($event)"
+                class="custom-slider custom-slider--orange"
+              />
+            </div>
+
+            <div class="macros-preview-grid">
+              <div class="macro-preview-card macro-preview-card--protein">
+                <div class="mpc-top">
+                  <span class="mpc-icon">🍗</span>
+                  <span class="mpc-title">Proteína</span>
+                </div>
+                <p class="mpc-amount">{{ proteinGrams() }} g</p>
+                <p class="mpc-sub">Equivale aprox. a:</p>
+                <p class="mpc-desc">Pechuga de pollo, huevos, atún o legumbres repartidas en tus comidas del día.</p>
+              </div>
+
+              <div class="macro-preview-card macro-preview-card--carbs">
+                <div class="mpc-top">
+                  <span class="mpc-icon">🌾</span>
+                  <span class="mpc-title">Carbohidratos</span>
+                </div>
+                <p class="mpc-amount">{{ carbsGrams() }} g</p>
+                <p class="mpc-sub">Equivale aprox. a:</p>
+                <p class="mpc-desc">Arroz integral, avena, tortillas de maíz, frutas frescas y papas al horno.</p>
+              </div>
+
+              <div class="macro-preview-card macro-preview-card--fat">
+                <div class="mpc-top">
+                  <span class="mpc-icon">🥑</span>
+                  <span class="mpc-title">Grasas buenas</span>
+                </div>
+                <p class="mpc-amount">{{ fatGrams() }} g</p>
+                <p class="mpc-sub">Equivale aprox. a:</p>
+                <p class="mpc-desc">Aguacate fresco, aceite de oliva virgen extra, nueces y semillas.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ 3. CATÁLOGO COMPLETO DE CARACTERÍSTICAS ══════════ -->
+      <section class="features-catalog" aria-labelledby="catalog-title">
+        <header class="section-header">
+          <p class="section-header__eyebrow">Funcionalidades</p>
+          <h2 id="catalog-title" class="section-header__title">
+            Todo lo que necesitas para tu semana
+          </h2>
+          <p class="section-header__subtitle">
+            Filtra según lo que más te interese solucionar en tu día a día:
+          </p>
+
+          <!-- Filtros -->
+          <div class="filter-tabs" role="tablist" aria-label="Filtrar funcionalidades">
+            <button
+              type="button"
+              class="tab-btn"
+              [class.tab-btn--active]="selectedCategory() === 'all'"
+              (click)="setCategory('all')"
+            >
+              Todas (6)
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              [class.tab-btn--active]="selectedCategory() === 'ahorro'"
+              (click)="setCategory('ahorro')"
+            >
+              💰 Ahorro y Dinero
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              [class.tab-btn--active]="selectedCategory() === 'tiempo'"
+              (click)="setCategory('tiempo')"
+            >
+              ⏱️ Tiempo y Organización
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              [class.tab-btn--active]="selectedCategory() === 'salud'"
+              (click)="setCategory('salud')"
+            >
+              🥑 Salud y Comida Real
+            </button>
+          </div>
+        </header>
+
+        <div class="features-grid">
+          @for (feat of filteredFeatures(); track feat.id) {
+            <article class="feature-detail-card">
+              <div class="fdc-header">
+                <span class="fdc-icon" aria-hidden="true">{{ feat.icon }}</span>
+                <span class="fdc-badge">{{ feat.badge }}</span>
+              </div>
+              <h3 class="fdc-title">{{ feat.title }}</h3>
+              <p class="fdc-summary">{{ feat.summary }}</p>
+              <p class="fdc-detail">{{ feat.detail }}</p>
+            </article>
+          }
+        </div>
+      </section>
+
+      <!-- ══ 4. COMPARATIVA: TRADICIONAL VS DEFICCITTO ══════════ -->
+      <section class="comparison-section" aria-labelledby="comp-title">
+        <header class="section-header">
+          <p class="section-header__eyebrow">Comparativa</p>
+          <h2 id="comp-title" class="section-header__title">
+            La diferencia en tu día a día
+          </h2>
+          <p class="section-header__subtitle">
+            Mira cómo cambia tu semana al incorporar Deficcitto:
+          </p>
+        </header>
+
+        <div class="comparison-table-wrapper">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Aspecto</th>
+                <th class="th-bad">❌ Cocinar sin plan</th>
+                <th class="th-good">✅ Con Deficcitto</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>En el supermercado</strong></td>
+                <td class="td-bad">Compras "a ver qué se antoja", gastas de más y olvidas ingredientes.</td>
+                <td class="td-good">Lista exacta organizada por pasillos. Entras, compras y sales en 25 min.</td>
+              </tr>
+              <tr>
+                <td><strong>Llegando del trabajo</strong></td>
+                <td class="td-bad">Cansancio, refrigerador vacío y pedir comida rápida cara.</td>
+                <td class="td-good">Comida deliciosa y balanceada lista en tu tupper para calentar en 2 min.</td>
+              </tr>
+              <tr>
+                <td><strong>Cuidado de tus metas</strong></td>
+                <td class="td-bad">Incertidumbre: "No sé cuántas calorías o grasas comí hoy".</td>
+                <td class="td-good">Control claro y visual adaptado a tus metas sin obsesiones.</td>
+              </tr>
+              <tr>
+                <td><strong>Desperdicio de comida</strong></td>
+                <td class="td-bad">Verduras y carnes que se echan a perder al fondo de la nevera.</td>
+                <td class="td-good">Todo lo que compras tiene un destino asignado en tu menú.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ══ 5. CALL TO ACTION (Matching Landing CTA) ══════════════ -->
+  <section class="cta-banner" aria-labelledby="cta-title">
+    <div class="cta-banner__blob cta-banner__blob--1" aria-hidden="true"></div>
+    <div class="cta-banner__blob cta-banner__blob--2" aria-hidden="true"></div>
+
+    <div class="cta-banner__container container">
+      <h2 class="cta-banner__title" id="cta-title">
+        ¿Listo para simplificar tu alimentación?
+      </h2>
+      <p class="cta-banner__subtitle">
+        Crea tu cuenta gratis en menos de un minuto y empieza a organizar tu semana hoy.
+      </p>
+      <div class="cta-banner__actions">
+        <a routerLink="/auth/register" class="btn btn--primary btn--xl" appRipple>
+          Crear cuenta gratis
+        </a>
+        <a routerLink="/como-funciona" class="btn btn--ghost btn--xl">
+          Ver cómo funciona paso a paso
+        </a>
+      </div>
+    </div>
+  </section>
+</div>

@@ -14,9 +14,9 @@
 
     <!-- Desktop Nav Links -->
     <ul class="navbar__links" role="list">
-      <li><a routerLink="/" fragment="features" class="navbar__link">Características</a></li>
-      <li><a routerLink="/" fragment="how-it-works" class="navbar__link">Cómo funciona</a></li>
-      <li><a routerLink="/" fragment="testimonials" class="navbar__link">Testimonios</a></li>
+      <li><a routerLink="/caracteristicas" routerLinkActive="navbar__link--active" class="navbar__link">Características</a></li>
+      <li><a routerLink="/como-funciona" routerLinkActive="navbar__link--active" class="navbar__link">Cómo funciona</a></li>
+      <li><a routerLink="/testimonios" routerLinkActive="navbar__link--active" class="navbar__link">Testimonios</a></li>
     </ul>
 
     <!-- Desktop Auth Buttons -->
@@ -66,9 +66,9 @@
   @if (menuOpen()) {
     <div class="navbar__mobile-menu" id="mobile-menu" role="dialog" aria-label="Menú móvil">
       <ul class="navbar__mobile-links" role="list">
-        <li><a routerLink="/" fragment="features"    class="navbar__mobile-link" (click)="closeMenu()">Características</a></li>
-        <li><a routerLink="/" fragment="how-it-works" class="navbar__mobile-link" (click)="closeMenu()">Cómo funciona</a></li>
-        <li><a routerLink="/" fragment="testimonials" class="navbar__mobile-link" (click)="closeMenu()">Testimonios</a></li>
+        <li><a routerLink="/caracteristicas" routerLinkActive="navbar__mobile-link--active" class="navbar__mobile-link" (click)="closeMenu()">Características</a></li>
+        <li><a routerLink="/como-funciona" routerLinkActive="navbar__mobile-link--active" class="navbar__mobile-link" (click)="closeMenu()">Cómo funciona</a></li>
+        <li><a routerLink="/testimonios" routerLinkActive="navbar__mobile-link--active" class="navbar__mobile-link" (click)="closeMenu()">Testimonios</a></li>
       </ul>
       <div class="navbar__mobile-actions">
         <a routerLink="/auth/login"    class="btn btn--ghost-dark btn--full" (click)="closeMenu()">Iniciar sesión</a>
@@ -101,9 +101,10 @@
       <div class="footer__col">
         <h3 class="footer__col-title">Producto</h3>
         <ul role="list">
-          <li><a routerLink="/" fragment="features"     class="footer__link">Características</a></li>
-          <li><a routerLink="/" fragment="how-it-works" class="footer__link">Cómo funciona</a></li>
-          <li><a routerLink="/auth/register"            class="footer__link">Empezar gratis</a></li>
+          <li><a routerLink="/caracteristicas" class="footer__link">Características</a></li>
+          <li><a routerLink="/como-funciona"   class="footer__link">Cómo funciona</a></li>
+          <li><a routerLink="/testimonios"     class="footer__link">Testimonios</a></li>
+          <li><a routerLink="/auth/register"   class="footer__link">Empezar gratis</a></li>
         </ul>
       </div>
       <div class="footer__col">

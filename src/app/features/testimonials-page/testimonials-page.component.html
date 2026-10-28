@@ -1,0 +1,301 @@
+<div class="testimonials-view">
+  <!-- ══ HERO (Dark, identical to Landing hero) ═══════════════ -->
+  <header class="test-hero">
+    <div class="test-hero__blob test-hero__blob--green"  aria-hidden="true"></div>
+    <div class="test-hero__blob test-hero__blob--orange" aria-hidden="true"></div>
+
+    <div class="container test-hero__container">
+      <div class="test-hero__badge">
+        <span aria-hidden="true">⭐</span> Historias de la comunidad
+      </div>
+
+      <h1 class="test-hero__title">
+        Personas reales,<br>
+        <span class="test-hero__title--accent">resultados comprobados</span>
+      </h1>
+
+      <p class="test-hero__subtitle">
+        Descubre cómo profesionistas, estudiantes y familias ahorran tiempo, reducen sus gastos y comen delicioso con Deficcitto.
+      </p>
+    </div>
+  </header>
+
+  <!-- ══ SOCIAL PROOF METRICS (Dark bar, matching Landing stats) ═ -->
+  <section class="metrics-bar" aria-label="Métricas de satisfacción">
+    <div class="container metrics-container">
+      <div class="metric-item">
+        <span class="metric-val">4.9 / 5</span>
+        <span class="metric-stars" aria-hidden="true">★★★★★</span>
+        <span class="metric-label">Calificación promedio</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-val">1,200+</span>
+        <span class="metric-icon" aria-hidden="true">🍱</span>
+        <span class="metric-label">Planes semanales activos</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-val">$1,450 MXN</span>
+        <span class="metric-icon" aria-hidden="true">💰</span>
+        <span class="metric-label">Ahorro mensual promedio</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-val">85%</span>
+        <span class="metric-icon" aria-hidden="true">🌿</span>
+        <span class="metric-label">Menos comida desperdiciada</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ MAIN CONTENT (Clean, Light Background, matching Landing) ═ -->
+  <main class="testimonials-main">
+    <div class="container">
+      <!-- Filtros de categoría & Botón de historia -->
+      <div class="controls-toolbar">
+        <div class="category-filters" role="tablist" aria-label="Filtrar testimonios">
+          <button
+            type="button"
+            class="cat-btn"
+            [class.cat-btn--active]="selectedCategory() === 'all'"
+            (click)="setCategory('all')"
+          >
+            Todas las historias
+          </button>
+          <button
+            type="button"
+            class="cat-btn"
+            [class.cat-btn--active]="selectedCategory() === 'trabajo'"
+            (click)="setCategory('trabajo')"
+          >
+            💼 Profesionistas
+          </button>
+          <button
+            type="button"
+            class="cat-btn"
+            [class.cat-btn--active]="selectedCategory() === 'ahorro'"
+            (click)="setCategory('ahorro')"
+          >
+            💰 Ahorro y Presupuesto
+          </button>
+          <button
+            type="button"
+            class="cat-btn"
+            [class.cat-btn--active]="selectedCategory() === 'familia'"
+            (click)="setCategory('familia')"
+          >
+            👨‍👩‍👧 Familias y Mamás
+          </button>
+          <button
+            type="button"
+            class="cat-btn"
+            [class.cat-btn--active]="selectedCategory() === 'salud'"
+            (click)="setCategory('salud')"
+          >
+            🥑 Pérdida de Peso & Salud
+          </button>
+        </div>
+
+        <button type="button" class="btn btn--secondary btn--sm" (click)="toggleForm()">
+          ✍️ {{ showForm() ? 'Cerrar formulario' : 'Compartir mi historia' }}
+        </button>
+      </div>
+
+      <!-- Formulario interactivo (Estilo limpio Landing) -->
+      @if (showForm()) {
+        <section class="submit-story-card" aria-label="Formulario para compartir testimonio">
+          <div class="ssc-header">
+            <h3>¡Comparte tu experiencia con Deficcitto!</h3>
+            <p>Tu historia puede inspirar a otros a transformar sus hábitos de alimentación.</p>
+          </div>
+
+          @if (formSuccess()) {
+            <div class="alert alert--success" role="status">
+              🎉 <strong>¡Gracias por compartir tu historia!</strong> Tu testimonio ya aparece publicado abajo en la lista.
+            </div>
+          }
+
+          <form (ngSubmit)="submitStory()" class="story-form">
+            <div class="form-row">
+              <div class="form-field">
+                <label for="usr-name">Tu nombre completo *</label>
+                <input
+                  id="usr-name"
+                  type="text"
+                  [(ngModel)]="newName"
+                  name="newName"
+                  placeholder="Ej. Carlos Mendoza"
+                  required
+                  class="input-control"
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="usr-role">Ocupación / Perfil</label>
+                <input
+                  id="usr-role"
+                  type="text"
+                  [(ngModel)]="newRole"
+                  name="newRole"
+                  placeholder="Ej. Ingeniero, Mamá, Estudiante..."
+                  class="input-control"
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="usr-city">Ciudad / País</label>
+                <input
+                  id="usr-city"
+                  type="text"
+                  [(ngModel)]="newCity"
+                  name="newCity"
+                  placeholder="Ej. Guadalajara, JAL"
+                  class="input-control"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-field">
+                <label for="usr-cat">Categoría</label>
+                <select id="usr-cat" [(ngModel)]="newCategory" name="newCategory" class="input-control">
+                  <option value="salud">Pérdida de peso y salud</option>
+                  <option value="ahorro">Ahorro y presupuesto</option>
+                  <option value="trabajo">Profesionistas ocupados</option>
+                  <option value="familia">Familia y hogar</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label>Calificación</label>
+                <div class="stars-selector" role="radiogroup" aria-label="Selecciona estrellas">
+                  @for (star of [1, 2, 3, 4, 5]; track star) {
+                    <button
+                      type="button"
+                      class="star-btn"
+                      [class.star-btn--selected]="star <= newRating"
+                      (click)="setRating(star)"
+                      aria-label="{{ star }} estrellas"
+                    >
+                      ★
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="usr-meal">Tu comida favorita en Deficcitto</label>
+                <input
+                  id="usr-meal"
+                  type="text"
+                  [(ngModel)]="newFavoriteMeal"
+                  name="newFavoriteMeal"
+                  placeholder="Ej. Bowl de salmón y batata asada"
+                  class="input-control"
+                />
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="usr-quote">Tu testimonio *</label>
+              <textarea
+                id="usr-quote"
+                [(ngModel)]="newQuote"
+                name="newQuote"
+                rows="3"
+                placeholder="Cuéntanos cómo cambió tu rutina, tus gastos o tu bienestar..."
+                required
+                class="input-control textarea-control"
+              ></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary" [disabled]="!newName.trim() || !newQuote.trim()">
+                Publicar testimonio
+              </button>
+              <button type="button" class="btn btn--ghost-dark" (click)="toggleForm()">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </section>
+      }
+
+      <!-- Grid de historias (Cards blancas limpias idénticas a la Landing) -->
+      <div class="stories-grid">
+        @for (story of filteredStories(); track story.id) {
+          <article class="story-card">
+            <!-- Top bar -->
+            <div class="sc-top">
+              <div class="sc-stars" aria-label="{{ story.rating }} estrellas">
+                @for (s of getStars(story.rating); track $index) {
+                  <span>★</span>
+                }
+              </div>
+              <span class="sc-benefit-badge">{{ story.keyBenefit }}</span>
+            </div>
+
+            <!-- Cita -->
+            <blockquote class="sc-quote">
+              "{{ story.quote }}"
+            </blockquote>
+
+            <!-- Comparativa Antes vs Después -->
+            <div class="sc-comparison">
+              <div class="scc-item scc-item--before">
+                <span class="scc-tag">Antes:</span>
+                <p>{{ story.before }}</p>
+              </div>
+              <div class="scc-item scc-item--after">
+                <span class="scc-tag">Con Deficcitto:</span>
+                <p>{{ story.after }}</p>
+              </div>
+            </div>
+
+            <!-- Platillo favorito -->
+            <div class="sc-fav-meal">
+              <span class="sfm-icon">🍽️</span>
+              <span>Platillo favorito: <strong>{{ story.favoriteMeal }}</strong></span>
+            </div>
+
+            <!-- Autor -->
+            <div class="sc-author">
+              <div
+                class="sc-avatar"
+                [style.background-color]="story.color"
+                aria-hidden="true"
+              >
+                {{ story.initials }}
+              </div>
+              <div class="sc-author-meta">
+                <h4 class="sc-name">{{ story.name }}</h4>
+                <p class="sc-role">{{ story.role }} &nbsp;·&nbsp; {{ story.city }}</p>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+  </main>
+
+  <!-- ══ CTA BANNER (Idéntico a Landing) ═══════════════════════ -->
+  <section class="cta-banner" aria-labelledby="cta-title">
+    <div class="cta-banner__blob cta-banner__blob--1" aria-hidden="true"></div>
+    <div class="cta-banner__blob cta-banner__blob--2" aria-hidden="true"></div>
+
+    <div class="cta-banner__container container">
+      <h2 class="cta-banner__title" id="cta-title">
+        Únete a más de 1,200 personas satisfechas
+      </h2>
+      <p class="cta-banner__subtitle">
+        Crea tu cuenta gratis hoy y experimenta la tranquilidad de tener tu semana de comidas resuelta.
+      </p>
+      <div class="cta-banner__actions">
+        <a routerLink="/auth/register" class="btn btn--primary btn--xl" appRipple>
+          Crear cuenta gratis
+        </a>
+        <a routerLink="/caracteristicas" class="btn btn--ghost btn--xl">
+          Ver características
+        </a>
+      </div>
+    </div>
+  </section>
+</div>

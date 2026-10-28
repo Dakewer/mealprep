@@ -1,0 +1,625 @@
+/* ============================================================
+   HOW IT WORKS PAGE – Styles (Matching Landing Design System)
+   ============================================================ */
+
+.how-view {
+  min-height: 100vh;
+}
+
+/* ══ 1. HERO (Dark, identical to Landing hero) ═══════════════ */
+.how-hero {
+  background: var(--clr-dark-900);
+  padding-top: 7.5rem;
+  padding-bottom: 5rem;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.how-hero__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+}
+
+.how-hero__blob--green {
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+  top: -150px;
+  left: -100px;
+}
+
+.how-hero__blob--orange {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+  bottom: -100px;
+  right: -100px;
+}
+
+.how-hero__container {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+}
+
+.how-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: var(--clr-primary-400);
+  padding: 0.375rem 0.875rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.how-hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--text-on-dark);
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.how-hero__title--accent {
+  background: linear-gradient(135deg, var(--clr-primary-400) 0%, var(--clr-secondary-400) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.how-hero__subtitle {
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: var(--text-on-dark-2);
+  max-width: 620px;
+  margin-inline: auto;
+}
+
+/* ══ 2. MAIN CONTENT (Clean Light Background) ═════════════════ */
+.how-main {
+  background: var(--clr-light-50);
+  padding-block: 4.5rem;
+}
+
+.how-step-section {
+  margin-bottom: 5rem;
+}
+
+.step-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clr-primary-700);
+  background: var(--clr-primary-50);
+  border: 1px solid var(--clr-primary-200);
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  margin-bottom: 0.75rem;
+}
+
+.section-title {
+  font-size: clamp(1.875rem, 4vw, 2.5rem);
+  font-weight: 900;
+  color: var(--text-on-light);
+  margin-bottom: 0.625rem;
+}
+
+.section-subtitle {
+  font-size: 1rem;
+  color: var(--text-on-light-3);
+  line-height: 1.65;
+  margin-bottom: 2.25rem;
+}
+
+.section-header {
+  text-align: center;
+  max-width: 620px;
+  margin-inline: auto;
+  margin-bottom: 3rem;
+}
+
+.section-header__eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--clr-primary-600);
+  margin-bottom: 0.625rem;
+}
+
+.section-header__title {
+  font-size: clamp(1.875rem, 4vw, 2.5rem);
+  font-weight: 900;
+  color: var(--text-on-light);
+  margin-bottom: 1rem;
+}
+
+.section-header__subtitle {
+  font-size: 1rem;
+  color: var(--text-on-light-3);
+  line-height: 1.65;
+}
+
+/* ── 1. TDEE Quick Calculator ─────────────────────────────── */
+.tdee-calc-card {
+  background: #fff;
+  border: 1px solid var(--clr-light-200);
+  border-radius: var(--radius-2xl);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.tdee-inputs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2.25rem;
+}
+
+.form-group--span2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+  .tdee-inputs-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-group--span2 {
+    grid-column: span 1;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-on-light);
+  margin-bottom: 0.5rem;
+}
+
+.form-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.form-val-badge {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--clr-primary-600);
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-option {
+  flex: 1;
+  background: var(--clr-light-100);
+  border: 1px solid var(--clr-light-200);
+  color: var(--text-on-light-2);
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-option:hover {
+  border-color: var(--clr-primary-300);
+  color: var(--clr-primary-700);
+}
+
+.btn-option--active {
+  background: #fff !important;
+  color: var(--clr-primary-700) !important;
+  font-weight: 700 !important;
+  border-color: var(--clr-primary-400) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.form-select {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--clr-light-300);
+  color: var(--text-on-light);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.form-select:focus {
+  border-color: var(--clr-primary-500);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.custom-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--clr-light-200);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--clr-primary-500);
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.4);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* TDEE Result Banner */
+.tdee-result-banner {
+  background: var(--clr-primary-50);
+  border: 1px solid var(--clr-primary-200);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .tdee-result-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+.trb-icon {
+  font-size: 2.75rem;
+}
+
+.trb-eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--clr-primary-700);
+  margin-bottom: 0.25rem;
+}
+
+.trb-calories {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--text-on-light);
+  margin-bottom: 0.5rem;
+}
+
+.trb-calories span {
+  color: var(--clr-secondary-600);
+}
+
+.trb-explanation {
+  font-size: 0.9rem;
+  color: var(--text-on-light-2);
+  line-height: 1.55;
+}
+
+/* ── 2. Batch Cooking Timeline ────────────────────────────── */
+.timeline-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.timeline-tab {
+  background: #fff;
+  border: 1px solid var(--clr-light-200);
+  padding: 1.25rem;
+  border-radius: var(--radius-xl);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.timeline-tab:hover {
+  border-color: var(--clr-primary-300);
+  transform: translateY(-2px);
+}
+
+.timeline-tab--active {
+  background: var(--clr-primary-50) !important;
+  border-color: var(--clr-primary-400) !important;
+  box-shadow: var(--shadow-md);
+}
+
+.tab-phase {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--clr-secondary-600);
+  margin-bottom: 0.25rem;
+}
+
+.tab-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-on-light);
+}
+
+.timeline-detail-card {
+  background: #fff;
+  border: 1px solid var(--clr-light-200);
+  border-radius: var(--radius-2xl);
+  padding: 2.25rem;
+  box-shadow: var(--shadow-md);
+}
+
+.tdc-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tdc-icon {
+  font-size: 2.5rem;
+}
+
+.tdc-time {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--clr-primary-700);
+  text-transform: uppercase;
+}
+
+.tdc-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-on-light);
+}
+
+.tdc-action {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-on-light-2);
+  margin-bottom: 1.25rem;
+}
+
+.tdc-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  color: #9a3412;
+}
+
+.tdc-tip-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* ── 3. Food Storage Guide ────────────────────────────────── */
+.storage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.storage-card {
+  background: #fff;
+  border: 1px solid var(--clr-light-200);
+  border-radius: var(--radius-2xl);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.storage-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.storage-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.storage-icon {
+  font-size: 1.75rem;
+}
+
+.storage-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-on-light);
+}
+
+.storage-metrics {
+  background: var(--clr-light-100);
+  border: 1px solid var(--clr-light-200);
+  border-radius: var(--radius-lg);
+  padding: 0.875rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sm-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.sm-label {
+  color: var(--text-on-light-3);
+  font-weight: 500;
+}
+
+.sm-val {
+  font-weight: 700;
+  color: var(--clr-primary-700);
+}
+
+.storage-tip {
+  font-size: 0.825rem;
+  color: var(--text-on-light-3);
+  line-height: 1.45;
+  margin-top: auto;
+}
+
+.storage-tip span {
+  font-weight: 700;
+  color: var(--clr-secondary-600);
+}
+
+/* ── 4. FAQ Accordion ─────────────────────────────────────── */
+.how-faq-section {
+  margin-bottom: 4.5rem;
+  max-width: 800px;
+  margin-inline: auto;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.faq-item {
+  background: #fff;
+  border: 1px solid var(--clr-light-200);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.faq-item--open {
+  border-color: var(--clr-primary-300);
+  box-shadow: var(--shadow-md);
+}
+
+.faq-question {
+  width: 100%;
+  padding: 1.25rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-on-light);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.faq-toggle-icon {
+  font-size: 1.5rem;
+  color: var(--clr-primary-600);
+  margin-left: 1rem;
+}
+
+.faq-answer {
+  padding: 0 1.5rem 1.25rem 1.5rem;
+  font-size: 0.95rem;
+  color: var(--text-on-light-2);
+  line-height: 1.65;
+}
+
+/* ══ 5. CTA BANNER (Identical to Landing) ═════════════════════ */
+.cta-banner {
+  background: linear-gradient(135deg, var(--clr-primary-800) 0%, var(--clr-primary-700) 50%, #0d4525 100%);
+  padding-block: 6rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+}
+
+.cta-banner__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.cta-banner__blob--1 {
+  width: 400px;
+  height: 400px;
+  background: rgba(34, 197, 94, 0.2);
+  top: -100px;
+  left: -100px;
+}
+
+.cta-banner__blob--2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(249, 115, 22, 0.15);
+  bottom: -80px;
+  right: -80px;
+}
+
+.cta-banner__container {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+}
+
+.cta-banner__title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.cta-banner__subtitle {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 2.25rem;
+  line-height: 1.6;
+}
+
+.cta-banner__actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
