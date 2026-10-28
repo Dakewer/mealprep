@@ -1,12 +1,12 @@
 import { Component, signal, inject, HostListener } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { RippleDirective } from '../../shared/directives/ripple.directive';
 
 @Component({
   selector: 'app-public-layout',
   standalone: true,
-  imports: [RouterLink, RouterOutlet, RippleDirective],
+  imports: [RouterLink, RouterOutlet, RouterLinkActive, RippleDirective],
   templateUrl: './public-layout.component.html',
   styleUrl: './public-layout.component.css',
 })

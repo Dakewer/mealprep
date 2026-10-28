@@ -18,6 +18,33 @@ export const routes: Routes = [
           ),
         title: 'Deficcitto – Planifica tus comidas',
       },
+      {
+        path: 'caracteristicas',
+        loadComponent: () =>
+          import('./features/features-page/features-page.component').then(
+            m => m.FeaturesPageComponent
+          ),
+        title: 'Características – Deficcitto',
+      },
+      {
+        path: 'como-funciona',
+        loadComponent: () =>
+          import('./features/how-it-works-page/how-it-works-page.component').then(
+            m => m.HowItWorksPageComponent
+          ),
+        title: 'Cómo Funciona – Deficcitto',
+      },
+      {
+        path: 'testimonios',
+        loadComponent: () =>
+          import('./features/testimonials-page/testimonials-page.component').then(
+            m => m.TestimonialsPageComponent
+          ),
+        title: 'Testimonios e Historias – Deficcitto',
+      },
+      { path: 'features', redirectTo: 'caracteristicas', pathMatch: 'full' },
+      { path: 'how-it-works', redirectTo: 'como-funciona', pathMatch: 'full' },
+      { path: 'testimonials', redirectTo: 'testimonios', pathMatch: 'full' },
     ],
   },
 

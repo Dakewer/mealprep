@@ -1,0 +1,311 @@
+<div class="how-view">
+  <!-- ══ HERO (Dark, identical to Landing hero) ═══════════════ -->
+  <header class="how-hero">
+    <div class="how-hero__blob how-hero__blob--green"  aria-hidden="true"></div>
+    <div class="how-hero__blob how-hero__blob--orange" aria-hidden="true"></div>
+
+    <div class="container how-hero__container">
+      <div class="how-hero__badge">
+        <span aria-hidden="true">⏱️</span> El método comprobado
+      </div>
+
+      <h1 class="how-hero__title">
+        Cómo funciona<br>
+        <span class="how-hero__title--accent">Deficcitto</span>
+      </h1>
+
+      <p class="how-hero__subtitle">
+        El paso a paso para resolver toda tu comida de la semana en 90 minutos, comiendo rico, fresco y sin gastar de más.
+      </p>
+    </div>
+  </header>
+
+  <!-- ══ MAIN CONTENT (Clean Light Background) ═════════════════ -->
+  <main class="how-main">
+    <div class="container">
+      <!-- ══ 1. CALCULADORA RÁPIDA DE TDEE (Paso 1) ═════════════ -->
+      <section class="how-step-section" aria-labelledby="step1-title">
+        <span class="step-badge">Paso 01</span>
+        <h2 id="step1-title" class="section-title">Diagnóstico de tus necesidades en 30 segundos</h2>
+        <p class="section-subtitle">
+          Antes de cocinar, Deficcitto calcula cuánta energía necesita tu cuerpo con base en tu estilo de vida real:
+        </p>
+
+        <div class="tdee-calc-card">
+          <div class="tdee-inputs-grid">
+            <!-- Género -->
+            <div class="form-group">
+              <label class="form-label">Género biológico</label>
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn-option"
+                  [class.btn-option--active]="gender() === 'male'"
+                  (click)="gender.set('male')"
+                >
+                  👨 Hombre
+                </button>
+                <button
+                  type="button"
+                  class="btn-option"
+                  [class.btn-option--active]="gender() === 'female'"
+                  (click)="gender.set('female')"
+                >
+                  👩 Mujer
+                </button>
+              </div>
+            </div>
+
+            <!-- Edad -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="hiw-age" class="form-label">Edad</label>
+                <span class="form-val-badge">{{ age() }} años</span>
+              </div>
+              <input
+                id="hiw-age"
+                type="range"
+                min="16"
+                max="75"
+                [ngModel]="age()"
+                (ngModelChange)="age.set($event)"
+                class="custom-slider"
+              />
+            </div>
+
+            <!-- Peso -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="hiw-weight" class="form-label">Peso corporal</label>
+                <span class="form-val-badge">{{ weight() }} kg</span>
+              </div>
+              <input
+                id="hiw-weight"
+                type="range"
+                min="40"
+                max="130"
+                [ngModel]="weight()"
+                (ngModelChange)="weight.set($event)"
+                class="custom-slider"
+              />
+            </div>
+
+            <!-- Altura -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="hiw-height" class="form-label">Estatura</label>
+                <span class="form-val-badge">{{ height() }} cm</span>
+              </div>
+              <input
+                id="hiw-height"
+                type="range"
+                min="140"
+                max="210"
+                [ngModel]="height()"
+                (ngModelChange)="height.set($event)"
+                class="custom-slider"
+              />
+            </div>
+
+            <!-- Nivel de actividad -->
+            <div class="form-group form-group--span2">
+              <label for="hiw-activity" class="form-label">Nivel de actividad cotidiana</label>
+              <select
+                id="hiw-activity"
+                class="form-select"
+                [ngModel]="activity()"
+                (ngModelChange)="activity.set(+$event)"
+              >
+                <option [value]="1.2">Sedentario (Trabajo de escritorio, poco o nada de ejercicio)</option>
+                <option [value]="1.375">Ligero (Caminar diario, ejercicio ligero 1 a 3 días)</option>
+                <option [value]="1.55">Moderado (Entrenamiento activo 3 a 5 días a la semana)</option>
+                <option [value]="1.725">Muy activo (Trabajo físico pesado o entrenamientos intensos)</option>
+              </select>
+            </div>
+
+            <!-- Objetivo -->
+            <div class="form-group form-group--span2">
+              <label class="form-label">¿Cuál es tu objetivo?</label>
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn-option"
+                  [class.btn-option--active]="goal() === 'deficit'"
+                  (click)="goal.set('deficit')"
+                >
+                  🔥 Perder grasa suavemente (-400 kcal)
+                </button>
+                <button
+                  type="button"
+                  class="btn-option"
+                  [class.btn-option--active]="goal() === 'maintenance'"
+                  (click)="goal.set('maintenance')"
+                >
+                  ⚖️ Mantener peso y vitalidad
+                </button>
+                <button
+                  type="button"
+                  class="btn-option"
+                  [class.btn-option--active]="goal() === 'surplus'"
+                  (click)="goal.set('surplus')"
+                >
+                  💪 Ganar energía / masa (+300 kcal)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TDEE Resultado -->
+          <div class="tdee-result-banner">
+            <div class="trb-icon" aria-hidden="true">🎯</div>
+            <div class="trb-content">
+              <p class="trb-eyebrow">Meta energética diaria calculada</p>
+              <div class="trb-calories">
+                <span>{{ targetCalories() | number }}</span> kcal / día
+              </div>
+              <p class="trb-explanation">
+                Tu gasto basal es de <strong>{{ bmr() | number }} kcal</strong> y tu consumo estimado es de <strong>{{ tdee() | number }} kcal</strong>. Con esta meta, Deficcitto arma tu lista de compras semanal con las porciones justas para que logres tu objetivo sin pasar hambre.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ 2. EL MÉTODO BATCH COOKING EN 90 MINUTOS (Paso 2) ══ -->
+      <section class="how-step-section" aria-labelledby="step2-title">
+        <span class="step-badge">Paso 02</span>
+        <h2 id="step2-title" class="section-title">Cocina en 90 minutos para toda tu semana</h2>
+        <p class="section-subtitle">
+          Haz clic en cada fase para ver cómo organizas el tiempo en la cocina sin estrés ni desorden:
+        </p>
+
+        <div class="timeline-container">
+          <!-- Selector de fases -->
+          <div class="timeline-tabs" role="tablist">
+            @for (p of timelinePhases; track p.phase) {
+              <button
+                type="button"
+                class="timeline-tab"
+                [class.timeline-tab--active]="activeTimelinePhase() === p.phase"
+                (click)="activeTimelinePhase.set(p.phase)"
+              >
+                <span class="tab-phase">{{ p.time }}</span>
+                <span class="tab-title">{{ p.icon }} {{ p.title }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Detalle de la fase activa -->
+          @for (p of timelinePhases; track p.phase) {
+            @if (activeTimelinePhase() === p.phase) {
+              <div class="timeline-detail-card">
+                <div class="tdc-header">
+                  <span class="tdc-icon">{{ p.icon }}</span>
+                  <div>
+                    <span class="tdc-time">{{ p.time }}</span>
+                    <h3 class="tdc-title">{{ p.title }}</h3>
+                  </div>
+                </div>
+                <p class="tdc-action"><strong>Qué haces:</strong> {{ p.action }}</p>
+                <div class="tdc-tip">
+                  <span class="tdc-tip-icon">💡</span>
+                  <p><strong>Consejo pro de Deficcitto:</strong> {{ p.tip }}</p>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </section>
+
+      <!-- ══ 3. GUÍA DE CONSERVACIÓN DE ALIMENTOS (Paso 3) ══════ -->
+      <section class="how-step-section" aria-labelledby="step3-title">
+        <span class="step-badge">Paso 03</span>
+        <h2 id="step3-title" class="section-title">Conserva tus comidas frescas y deliciosas</h2>
+        <p class="section-subtitle">
+          Tiempos recomendados de refrigeración y congelado para que cada comida sepa como recién hecha:
+        </p>
+
+        <div class="storage-grid">
+          @for (item of storageTips; track item.food) {
+            <div class="storage-card">
+              <div class="storage-card__head">
+                <span class="storage-icon">{{ item.icon }}</span>
+                <h3 class="storage-title">{{ item.food }}</h3>
+              </div>
+              <div class="storage-metrics">
+                <div class="sm-item">
+                  <span class="sm-label">🧊 Refrigerador:</span>
+                  <span class="sm-val">{{ item.fridgeDays }}</span>
+                </div>
+                <div class="sm-item">
+                  <span class="sm-label">❄️ Congelador:</span>
+                  <span class="sm-val">{{ item.freezerMonths }}</span>
+                </div>
+              </div>
+              <div class="storage-tip">
+                <span>Tip:</span> {{ item.proTip }}
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- ══ 4. PREGUNTAS FRECUENTES (FAQ) ═════════════════════ -->
+      <section class="how-faq-section" aria-labelledby="faq-title">
+        <header class="section-header">
+          <p class="section-header__eyebrow">Dudas resueltas</p>
+          <h2 id="faq-title" class="section-header__title">
+            Preguntas Frecuentes
+          </h2>
+          <p class="section-header__subtitle">
+            Todo lo que quieres saber antes de empezar a planificar:
+          </p>
+        </header>
+
+        <div class="faq-list">
+          @for (faq of faqs(); track $index) {
+            <div class="faq-item" [class.faq-item--open]="faq.open">
+              <button
+                type="button"
+                class="faq-question"
+                (click)="toggleFaq($index)"
+                [attr.aria-expanded]="faq.open"
+              >
+                <span>{{ faq.question }}</span>
+                <span class="faq-toggle-icon" aria-hidden="true">{{ faq.open ? '−' : '+' }}</span>
+              </button>
+              @if (faq.open) {
+                <div class="faq-answer">
+                  <p>{{ faq.answer }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ══ 5. CTA BANNER (Matching Landing) ══════════════════════ -->
+  <section class="cta-banner" aria-labelledby="cta-title">
+    <div class="cta-banner__blob cta-banner__blob--1" aria-hidden="true"></div>
+    <div class="cta-banner__blob cta-banner__blob--2" aria-hidden="true"></div>
+
+    <div class="cta-banner__container container">
+      <h2 class="cta-banner__title" id="cta-title">
+        Empieza tu primera semana organizada
+      </h2>
+      <p class="cta-banner__subtitle">
+        Ahorra tiempo, come delicioso y siéntete con energía desde el primer día.
+      </p>
+      <div class="cta-banner__actions">
+        <a routerLink="/auth/register" class="btn btn--primary btn--xl" appRipple>
+          Crear mi cuenta gratis
+        </a>
+        <a routerLink="/testimonios" class="btn btn--ghost btn--xl">
+          Ver testimonios de la comunidad
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
