@@ -1,0 +1,8 @@
+:host { display: block; }
+.macros { display: flex; flex-direction: column; gap: 0.875rem; }
+.macro__head { display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.3rem; }
+.macro__label { font-weight: 600; color: var(--text-on-light-2); }
+.macro__nums { color: var(--text-on-light-3); font-variant-numeric: tabular-nums; }
+.macro__nums--over { color: var(--clr-error); font-weight: 600; }
+.macro__track { height: 0.5rem; background: var(--clr-light-100); border-radius: var(--radius-full); overflow: hidden; }
+.macro__fill { height: 100%; border-radius: var(--radius-full); transition: width var(--transition-base); }
