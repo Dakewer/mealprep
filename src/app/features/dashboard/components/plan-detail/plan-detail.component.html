@@ -1,0 +1,243 @@
+<div class="plan-detail-view">
+  <!-- Topbar consistente con el Dashboard -->
+  <header class="detail-topbar">
+    <div class="detail-topbar__container">
+      <a routerLink="/dashboard" class="detail-logo">
+        <span aria-hidden="true">🥗</span>
+        <span>Deficcitto</span>
+      </a>
+
+      <nav class="detail-topbar__nav" aria-label="Navegación del detalle">
+        <a routerLink="/dashboard" class="btn btn--ghost-dark btn--sm back-btn" appRipple>
+          ← Volver al Dashboard
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="detail-main">
+    <!-- ══ CASO 1: PLAN NO ENCONTRADO (404) ═══════════════════ -->
+    @if (!plan()) {
+      <div class="not-found-card" role="alert">
+        <div class="not-found-icon" aria-hidden="true">
+          <!-- Cubiertos cruzados estilizados para 404 -->
+          <svg viewBox="0 0 100 100" width="70" height="70" fill="none" stroke="currentColor">
+            <circle cx="50" cy="50" r="44" stroke="#fecaca" stroke-width="2.5" stroke-dasharray="4 4" fill="#fef2f2" />
+            <g transform="rotate(45, 50, 50)">
+              <line x1="50" y1="50" x2="50" y2="85" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round" />
+              <path d="M 43 45 C 43 54, 57 54, 57 45" stroke="#ef4444" stroke-width="3" fill="none" />
+              <line x1="43" y1="45" x2="43" y2="20" stroke="#ef4444" stroke-width="2.5" />
+              <line x1="50" y1="46" x2="50" y2="20" stroke="#ef4444" stroke-width="2.5" />
+              <line x1="57" y1="45" x2="57" y2="20" stroke="#ef4444" stroke-width="2.5" />
+            </g>
+            <g transform="rotate(-45, 50, 50)">
+              <line x1="50" y1="50" x2="50" y2="85" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round" />
+              <path d="M 50 50 L 50 20 Q 57 23 57 35 Q 57 47 50 50 Z" fill="#ef4444" fill-opacity="0.3" stroke="#ef4444" stroke-width="2.5" />
+            </g>
+            <circle cx="50" cy="50" r="4" fill="#dc2626" />
+          </svg>
+        </div>
+
+        <h1 class="not-found-title">Plan no encontrado</h1>
+        <p class="not-found-message">
+          El plan de comidas con ID <code>"{{ planId() }}"</code> no existe, fue eliminado previamente o el enlace no es válido.
+        </p>
+
+        <div class="not-found-actions">
+          <a routerLink="/dashboard" class="btn btn--primary btn--sm" appRipple>
+            ← Regresar a Mis Planes
+          </a>
+        </div>
+      </div>
+    }
+
+    <!-- ══ CASO 2: PLAN ENCONTRADO Y DETALLADO ═════════════════ -->
+    @else {
+      <!-- Breadcrumb -->
+      <nav class="breadcrumbs" aria-label="Ruta de navegación">
+        <ol role="list">
+          <li><a routerLink="/dashboard">Dashboard</a></li>
+          <li aria-hidden="true">/</li>
+          <li><a routerLink="/dashboard">Mis planes</a></li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">{{ plan()!.name }}</li>
+        </ol>
+      </nav>
+
+      <!-- Encabezado del Plan -->
+      <header class="plan-header-card">
+        <div class="plan-header-card__top">
+          <div class="plan-header-card__info">
+            <h1 class="plan-header-card__title">{{ plan()!.name }}</h1>
+            <p class="plan-header-card__meta">
+              <span>📅 Creado el {{ plan()!.createdAt | date: 'd MMMM y, HH:mm' }}</span>
+              @if (plan()!.tags.length > 0) {
+                <span class="meta-dot">·</span>
+                <span class="goal-tag">🎯 {{ plan()!.tags[0] }}</span>
+              }
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="detail-fav-btn"
+            [class.detail-fav-btn--on]="plan()!.isFavorite"
+            [attr.aria-pressed]="plan()!.isFavorite"
+            [attr.aria-label]="plan()!.isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'"
+            (click)="toggleFavorite()"
+          >
+            {{ plan()!.isFavorite ? '★ Favorito' : '☆ Marcar favorito' }}
+          </button>
+        </div>
+
+        @if (plan()!.description) {
+          <p class="plan-header-card__desc">{{ plan()!.description }}</p>
+        }
+      </header>
+
+      <!-- Layout en 2 columnas: Ingredientes vs Macros -->
+      <div class="detail-grid">
+        <!-- Columna Izquierda: Ingredientes -->
+        <section class="card detail-ingredients-card" aria-labelledby="ingredients-heading">
+          <div class="card-head">
+            <h2 id="ingredients-heading" class="card-head__title">
+              🥗 Ingredientes del menú ({{ detailedItems().length }})
+            </h2>
+            <span class="card-head__subtitle">Cantidades y aporte nutricional por porción</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="ingredients-table" aria-label="Detalle de ingredientes y macronutrientes">
+              <thead>
+                <tr>
+                  <th scope="col">Ingrediente</th>
+                  <th scope="col">Categoría</th>
+                  <th scope="col" class="num-col">Cantidad</th>
+                  <th scope="col" class="num-col">Calorías</th>
+                  <th scope="col" class="num-col">P / C / G</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of detailedItems(); track item.ingredientId) {
+                  <tr>
+                    <td class="font-semibold">{{ item.ingredientName }}</td>
+                    <td>
+                      <span class="cat-badge" [class]="categoryColorClass(item.category)">
+                        {{ item.category }}
+                      </span>
+                    </td>
+                    <td class="num-col font-bold">{{ item.grams }} {{ item.unit }}</td>
+                    <td class="num-col text-cal">{{ item.calories }} kcal</td>
+                    <td class="num-col text-macros-small">
+                      <span class="color-p">{{ item.protein }}g</span> /
+                      <span class="color-c">{{ item.carbs }}g</span> /
+                      <span class="color-f">{{ item.fat }}g</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="table-total-row">
+                  <td colspan="2"><strong>Total del plan</strong></td>
+                  <td class="num-col"><strong>{{ plan()!.items.length }} ítems</strong></td>
+                  <td class="num-col text-cal font-extrabold">{{ plan()!.macroGoals.calories }} kcal</td>
+                  <td class="num-col text-macros-small font-bold">
+                    <span class="color-p">{{ plan()!.macroGoals.protein }}g</span> /
+                    <span class="color-c">{{ plan()!.macroGoals.carbs }}g</span> /
+                    <span class="color-f">{{ plan()!.macroGoals.fat }}g</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <!-- Columna Derecha: Macros & Acciones -->
+        <aside class="detail-sidebar" aria-label="Resumen nutricional y acciones">
+          <!-- Tarjeta de Macros -->
+          <div class="card detail-macros-card">
+            <h2 class="card-head__title">📊 Balance Nutricional</h2>
+            <p class="macros-vs-goal-text">Comparativa de este plan frente a tu meta diaria:</p>
+
+            <app-macro-bars
+              [totals]="plan()!.macroGoals"
+              [goals]="plans.goals()"
+            />
+
+            <!-- Distribución de Energía -->
+            <div class="macro-pie-box">
+              <h3 class="macro-pie-title">Distribución Calórica</h3>
+              <div class="macro-bar-stacked">
+                <div
+                  class="stacked-segment stacked-p"
+                  [style.width.%]="macroPercentages().protein"
+                  [title]="'Proteína: ' + macroPercentages().protein + '%'"
+                ></div>
+                <div
+                  class="stacked-segment stacked-c"
+                  [style.width.%]="macroPercentages().carbs"
+                  [title]="'Carbohidratos: ' + macroPercentages().carbs + '%'"
+                ></div>
+                <div
+                  class="stacked-segment stacked-f"
+                  [style.width.%]="macroPercentages().fat"
+                  [title]="'Grasas: ' + macroPercentages().fat + '%'"
+                ></div>
+              </div>
+
+              <div class="macro-legend">
+                <span class="legend-item"><span class="legend-dot dot-p"></span> Proteína {{ macroPercentages().protein }}%</span>
+                <span class="legend-item"><span class="legend-dot dot-c"></span> Carbos {{ macroPercentages().carbs }}%</span>
+                <span class="legend-item"><span class="legend-dot dot-f"></span> Grasas {{ macroPercentages().fat }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Barra de Acciones del Plan -->
+          <div class="card detail-actions-card">
+            <h2 class="card-head__title">Acciones del plan</h2>
+
+            <div class="action-buttons-list">
+              <button
+                type="button"
+                class="btn btn--primary btn--full"
+                (click)="generateShoppingList()"
+                appRipple
+              >
+                🛒 Generar lista de compras
+              </button>
+
+              <!-- Enlace a la ruta de edición de Luis (C3) -->
+              <a
+                [routerLink]="['/dashboard/planes', plan()!.id, 'editar']"
+                class="btn btn--outline btn--full"
+                appRipple
+              >
+                ✏️ Editar este plan
+              </a>
+
+              <button
+                type="button"
+                class="btn btn--ghost-dark btn--full btn-delete-action"
+                (click)="requestDelete()"
+                appRipple
+              >
+                🗑️ Eliminar plan
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Modal accesible de confirmación para eliminar (B4) -->
+      <app-confirm-modal
+        #confirmModal
+        title="¿Deseas eliminar este plan?"
+        confirmLabel="Sí, eliminar plan"
+        cancelLabel="Cancelar"
+        variant="danger"
+        (confirmed)="onDeleteConfirmed()"
+      />
+    }
+  </main>
+</div>

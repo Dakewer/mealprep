@@ -91,6 +91,15 @@ export const routes: Routes = [
       ),
     title: 'Dashboard – Deficcitto',
   },
+  {
+    path: 'dashboard/planes/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import(
+        './features/dashboard/components/plan-detail/plan-detail.component'
+      ).then(m => m.PlanDetailComponent),
+    title: 'Detalle del Plan – Deficcitto',
+  },
 
   // ── Fallback ──────────────────────────────────────────────
   {
