@@ -100,7 +100,14 @@
   margin: 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .meta-dot {
@@ -108,10 +115,13 @@
 }
 
 .goal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   background: var(--clr-primary-50, #f0fdf4);
   color: var(--clr-primary-700, #15803d);
   border: 1px solid var(--clr-primary-200, #bbf7d0);
-  padding: 0.15rem 0.6rem;
+  padding: 0.2rem 0.6rem;
   border-radius: var(--radius-full, 9999px);
   font-size: 0.75rem;
   font-weight: 600;
@@ -128,9 +138,12 @@
 }
 
 .detail-fav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: var(--clr-light-50, #f9fafb);
   border: 1px solid var(--clr-light-300, #d1d5db);
-  padding: 0.4rem 0.85rem;
+  padding: 0.45rem 0.9rem;
   border-radius: var(--radius-full, 9999px);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -171,10 +184,18 @@
 }
 
 .card-head__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.125rem;
   font-weight: 800;
   color: var(--text-on-light, #111827);
   margin: 0 0 0.25rem 0;
+}
+
+.heading-icon {
+  color: var(--clr-primary-600, #16a34a);
+  flex-shrink: 0;
 }
 
 .card-head__subtitle {
@@ -372,6 +393,14 @@
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+.action-btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
 }
 
 .btn-delete-action {

@@ -8,8 +8,13 @@ import { RippleDirective } from '../../directives/ripple.directive';
   template: `
     <div class="empty-card">
       <div class="empty-card__icon-wrapper" aria-hidden="true">
-        @if (customIcon()) {
-          <span class="empty-card__emoji">{{ customIcon() }}</span>
+        @if (customIcon() === 'search') {
+          <!-- Ícono de búsqueda SVG elegante -->
+          <svg class="empty-search-svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <line x1="11" y1="8" x2="11" y2="8.01"/>
+          </svg>
         } @else {
           <!-- Plato vacío con servilleta y ramita verde de mealprep -->
           <svg class="empty-dish-svg" viewBox="0 0 100 100" width="72" height="72" fill="none">
@@ -89,14 +94,10 @@ import { RippleDirective } from '../../directives/ripple.directive';
       justify-content: center;
     }
 
-    .empty-dish-svg {
+    .empty-dish-svg,
+    .empty-search-svg {
       width: 4.25rem;
       height: 4.25rem;
-    }
-
-    .empty-card__emoji {
-      font-size: 2.75rem;
-      line-height: 1;
     }
 
     .empty-card__content {
