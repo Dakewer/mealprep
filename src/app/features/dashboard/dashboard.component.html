@@ -1,0 +1,82 @@
+<div class="dashboard">
+  <!-- Topbar -->
+  <header class="dash-topbar">
+    <a routerLink="/" class="dash-logo">
+      <span aria-hidden="true">🥗</span>
+      <span>Deficcitto</span>
+    </a>
+    <div class="dash-topbar__right">
+      <span class="dash-user">
+        <span class="dash-user__avatar" aria-hidden="true">{{ authService.currentUser()?.avatarInitials }}</span>
+        <span class="dash-user__name">{{ authService.currentUser()?.name }}</span>
+      </span>
+      <button type="button" class="btn btn--ghost-dark btn--sm" (click)="logout()" appRipple>
+        Cerrar sesión
+      </button>
+    </div>
+  </header>
+
+  <main class="dash-main">
+    <h1 class="dash-title">¡Hola, {{ authService.currentUser()?.name }}! 👋</h1>
+
+    <!-- Tabs -->
+    <div class="dash-tabs" role="tablist" aria-label="Secciones del dashboard">
+      @for (tab of tabs; track tab.id) {
+        <button type="button" role="tab" class="dash-tab"
+                [id]="'tab-' + tab.id"
+                [class.dash-tab--active]="activeTab() === tab.id"
+                [attr.aria-selected]="activeTab() === tab.id"
+                [attr.aria-controls]="'panel-' + tab.id"
+                (click)="setTab(tab.id)">
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <div role="tabpanel" [id]="'panel-' + activeTab()" [attr.aria-labelledby]="'tab-' + activeTab()" class="dash-panel">
+      @switch (activeTab()) {
+        @case ('resumen') {
+          <div class="dash-stats">
+            <div class="dash-stat">
+              <span class="dash-stat__icon" aria-hidden="true">📊</span>
+              <span class="dash-stat__value">{{ plans.plans().length }}</span>
+              <span class="dash-stat__label">Planes creados</span>
+            </div>
+            <div class="dash-stat">
+              <span class="dash-stat__icon" aria-hidden="true">🛒</span>
+              <span class="dash-stat__value">{{ plans.lists().length }}</span>
+              <span class="dash-stat__label">Listas generadas</span>
+            </div>
+            <div class="dash-stat">
+              <span class="dash-stat__icon" aria-hidden="true">🔥</span>
+              <span class="dash-stat__value">{{ plans.tdee() }}</span>
+              <span class="dash-stat__label">TDEE estimado (kcal)</span>
+            </div>
+          </div>
+
+          <app-tdee-calculator />
+
+          <div class="dash-demo">
+            <h2 class="dash-demo__title">Demo de Notificaciones y Mensajes</h2>
+            <p class="dash-demo__desc">El sistema de notificaciones está funcionando. Prueba los distintos tipos:</p>
+            <div class="dash-demo__btns">
+              <button type="button" class="btn btn--primary btn--sm" (click)="demoSuccess()" appRipple>✅ Confirmación</button>
+              <button type="button" class="btn btn--sm btn--error" (click)="demoError()" appRipple>❌ Error</button>
+              <button type="button" class="btn btn--sm btn--warning" (click)="demoWarning()" appRipple>⚠️ Aviso</button>
+              <button type="button" class="btn btn--sm btn--info" (click)="demoInfo()" appRipple>ℹ️ Información</button>
+            </div>
+          </div>
+        }
+        @case ('crear') {
+          <app-plan-builder (saved)="setTab('planes')" />
+        }
+        @case ('planes') {
+          <app-plan-list (listGenerated)="setTab('compras')" (createRequested)="setTab('crear')" />
+        }
+        @case ('compras') {
+          <app-shopping-list (plansRequested)="setTab('planes')" />
+        }
+      }
+    </div>
+  </main>
+</div>
