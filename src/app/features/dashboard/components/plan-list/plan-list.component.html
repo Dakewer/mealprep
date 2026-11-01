@@ -1,49 +1,217 @@
-<section aria-labelledby="plans-title">
-  <h2 id="plans-title" class="title">Mis planes</h2>
-
-  @if (plans.plans().length === 0) {
-    <div class="empty">
-      <p>Todavía no tienes planes guardados.</p>
-      <button type="button" class="btn btn--primary btn--sm" (click)="createRequested.emit()" appRipple>
-        Crear mi primer plan
-      </button>
+<section class="plans-section" aria-labelledby="plans-title">
+  <!-- Header de la sección y barra de búsqueda -->
+  <header class="plans-header">
+    <div class="plans-header__title-box">
+      <h2 id="plans-title" class="title">Mis planes</h2>
+      <span class="plans-count-badge" aria-label="Total de planes">
+        {{ filteredPlans().length }} {{ filteredPlans().length === 1 ? 'plan' : 'planes' }}
+      </span>
     </div>
-  } @else {
-    <ul class="grid">
-      @for (plan of plans.plans(); track plan.id) {
+
+    <!-- Barra de búsqueda con debounce (B2) -->
+    <div class="plans-search-box">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input
+        type="search"
+        class="form-input search-input"
+        placeholder="Buscar por nombre o ingrediente..."
+        [value]="searchInputRaw()"
+        (input)="onSearchInput($event)"
+        aria-label="Buscar planes por nombre o ingrediente"
+      />
+      @if (searchInputRaw()) {
+        <button
+          type="button"
+          class="clear-search-btn"
+          (click)="clearSearch()"
+          aria-label="Limpiar búsqueda"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- ══ ESTADOS DE UI (B1) ═════════════════════════════════════ -->
+
+  <!-- Estado 1: Cargando con Skeleton (B1) -->
+  @if (isLoading()) {
+    <div class="loading-state-wrapper">
+      <app-loading-state type="skeleton-grid" [count]="pageSize()" message="Cargando tus planes guardados..." />
+    </div>
+  }
+
+  <!-- Estado 2: Error con cubiertos cruzados (B1) -->
+  @else if (hasError()) {
+    <div class="error-state-wrapper">
+      <app-error-state
+        title="No pudimos cargar tus planes"
+        message="Ocurrió un error al consultar tus planes guardados. Intenta de nuevo."
+        retryLabel="Reintentar carga"
+        (retry)="retryLoad()"
+      />
+    </div>
+  }
+
+  <!-- Estado 3: Lista vacía global (B1) -->
+  @else if (plans.plans().length === 0) {
+    <app-empty-state
+      title="Todavía no tienes planes guardados"
+      message="Diseña tu primer plan de comidas con cálculo de macros exacto y porciones balanceadas."
+      actionLabel="Crear mi primer plan"
+      (action)="createRequested.emit()"
+    />
+  }
+
+  <!-- Estado 4: Sin resultados en la búsqueda actual (B1 + B2) -->
+  @else if (filteredPlans().length === 0) {
+    <app-empty-state
+      customIcon="🔎"
+      title="Sin coincidencias para tu búsqueda"
+      [message]="'No encontramos ningún plan que coincida con &quot;' + debouncedSearch() + '&quot;. Intenta con otro nombre o ingrediente.'"
+      actionLabel="Limpiar búsqueda"
+      (action)="clearSearch()"
+    />
+  }
+
+  <!-- ══ LISTA DE PLANES Y PAGINACIÓN (B2) ══════════════════════ -->
+  @else {
+    <ul class="grid" role="list">
+      @for (plan of pagedPlans(); track plan.id) {
         <li class="plan">
           <div class="plan__head">
-            <h3 class="plan__name">{{ plan.name }}</h3>
-            <button type="button" class="fav" [class.fav--on]="plan.isFavorite"
-                    [attr.aria-pressed]="plan.isFavorite"
-                    [attr.aria-label]="plan.isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'"
-                    (click)="toggleFavorite(plan.id)">
+            <h3 class="plan__name">
+              <a [routerLink]="['/dashboard/planes', plan.id]" class="plan__name-link">
+                {{ plan.name }}
+              </a>
+            </h3>
+            <button
+              type="button"
+              class="fav"
+              [class.fav--on]="plan.isFavorite"
+              [attr.aria-pressed]="plan.isFavorite"
+              [attr.aria-label]="plan.isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'"
+              (click)="toggleFavorite(plan.id)"
+            >
               {{ plan.isFavorite ? '★' : '☆' }}
             </button>
           </div>
-          <p class="plan__date">{{ plan.createdAt | date: 'd MMM y' }}</p>
 
-          <p class="plan__macros">
-            <strong>{{ plan.macroGoals.calories }} kcal</strong> ·
-            P {{ plan.macroGoals.protein }} g · C {{ plan.macroGoals.carbs }} g · G {{ plan.macroGoals.fat }} g
+          <p class="plan__date">
+            <span aria-hidden="true">📅</span> {{ plan.createdAt | date: 'd MMM y, HH:mm' }}
           </p>
 
-          <ul class="plan__items">
-            @for (item of plan.items; track item.ingredientId) {
-              <li>{{ ingredientName(item.ingredientId) }} · {{ item.grams }} g</li>
+          <div class="plan__macros-badge">
+            <span class="macro-cal"><strong>{{ plan.macroGoals.calories }}</strong> kcal</span>
+            <span class="macro-sep">·</span>
+            <span class="macro-p">P: {{ plan.macroGoals.protein }}g</span>
+            <span class="macro-c">C: {{ plan.macroGoals.carbs }}g</span>
+            <span class="macro-f">G: {{ plan.macroGoals.fat }}g</span>
+          </div>
+
+          <ul class="plan__items" aria-label="Ingredientes del plan">
+            @for (item of plan.items.slice(0, 3); track item.ingredientId) {
+              <li class="plan__item-chip">
+                <span>{{ ingredientName(item.ingredientId) }}</span>
+                <span class="plan__item-grams">{{ item.grams }}g</span>
+              </li>
+            }
+            @if (plan.items.length > 3) {
+              <li class="plan__more-items">
+                +{{ plan.items.length - 3 }} ingredientes más...
+              </li>
             }
           </ul>
 
           <div class="plan__actions">
-            <button type="button" class="btn btn--primary btn--sm" (click)="generate(plan.id)" appRipple>
-              🛒 Generar lista
+            <!-- Botón Ver Detalle (B3) -->
+            <a
+              [routerLink]="['/dashboard/planes', plan.id]"
+              class="btn btn--outline btn--sm plan-btn"
+              appRipple
+            >
+              👁️ Detalle
+            </a>
+
+            <!-- Generar Lista de Compras -->
+            <button
+              type="button"
+              class="btn btn--primary btn--sm plan-btn"
+              (click)="generate(plan.id)"
+              appRipple
+            >
+              🛒 Lista
             </button>
-            <button type="button" class="btn btn--ghost-dark btn--sm" (click)="remove(plan.id, plan.name)">
-              Eliminar
+
+            <!-- Eliminar con Modal Accesible (B4) -->
+            <button
+              type="button"
+              class="btn btn--ghost-dark btn--sm plan-btn btn-delete"
+              (click)="requestDelete(plan)"
+              [attr.aria-label]="'Eliminar plan ' + plan.name"
+            >
+              🗑️
             </button>
           </div>
         </li>
       }
     </ul>
+
+    <!-- ══ CONTROLES DE PAGINACIÓN (B2) ═════════════════════════ -->
+    @if (totalPages() > 1) {
+      <nav class="pagination" aria-label="Paginación de planes">
+        <div class="pagination__info">
+          Página <strong>{{ currentPage() }}</strong> de <strong>{{ totalPages() }}</strong>
+          ({{ filteredPlans().length }} en total)
+        </div>
+
+        <div class="pagination__controls">
+          <button
+            type="button"
+            class="pagination__btn"
+            [disabled]="currentPage() === 1"
+            (click)="prevPage()"
+            aria-label="Página anterior"
+          >
+            ← Anterior
+          </button>
+
+          <div class="pagination__pages" role="group" aria-label="Números de página">
+            @for (page of paginationPages(); track page) {
+              <button
+                type="button"
+                class="pagination__page-number"
+                [class.pagination__page-number--active]="currentPage() === page"
+                [attr.aria-current]="currentPage() === page ? 'page' : null"
+                (click)="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="pagination__btn"
+            [disabled]="currentPage() === totalPages()"
+            (click)="nextPage()"
+            aria-label="Página siguiente"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </nav>
+    }
   }
+
+  <!-- ══ MODAL ACCESIBLE DE CONFIRMACIÓN (B4) ═══════════════════ -->
+  <app-confirm-modal
+    #deleteModal
+    title="¿Eliminar este plan de comidas?"
+    confirmLabel="Eliminar definitivamente"
+    cancelLabel="Conservar plan"
+    variant="danger"
+    (confirmed)="onDeleteConfirmed()"
+    (cancelled)="onDeleteCancelled()"
+  />
 </section>
