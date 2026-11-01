@@ -1,0 +1,42 @@
+<section aria-labelledby="lists-title">
+  <h2 id="lists-title" class="title">Listas de compras</h2>
+
+  @if (plans.lists().length === 0) {
+    <div class="empty">
+      <p>Aún no has generado ninguna lista. Genera una desde uno de tus planes.</p>
+      <button type="button" class="btn btn--primary btn--sm" (click)="plansRequested.emit()" appRipple>
+        Ir a mis planes
+      </button>
+    </div>
+  } @else {
+    @for (list of plans.lists(); track list.id) {
+      <article class="list">
+        <header class="list__head">
+          <div>
+            <h3 class="list__name">{{ list.planName }}</h3>
+            <p class="list__meta">
+              {{ list.generatedAt | date: 'd MMM y, HH:mm' }} · {{ progress(list) }}
+            </p>
+          </div>
+          <button type="button" class="btn btn--ghost-dark btn--sm" (click)="remove(list)">Eliminar</button>
+        </header>
+
+        @for (group of groups(list); track group.category) {
+          <h4 class="group">{{ group.category }}</h4>
+          <ul class="checks">
+            @for (item of group.items; track item.ingredientId) {
+              <li>
+                <label class="check" [class.check--done]="item.isChecked">
+                  <input type="checkbox" [checked]="item.isChecked"
+                         (change)="toggle(list.id, item.ingredientId)" />
+                  <span class="check__name">{{ item.ingredientName }}</span>
+                  <span class="check__qty">{{ item.quantity }} {{ item.unit }}</span>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+    }
+  }
+</section>
