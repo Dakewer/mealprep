@@ -1,0 +1,49 @@
+<section aria-labelledby="plans-title">
+  <h2 id="plans-title" class="title">Mis planes</h2>
+
+  @if (plans.plans().length === 0) {
+    <div class="empty">
+      <p>Todavía no tienes planes guardados.</p>
+      <button type="button" class="btn btn--primary btn--sm" (click)="createRequested.emit()" appRipple>
+        Crear mi primer plan
+      </button>
+    </div>
+  } @else {
+    <ul class="grid">
+      @for (plan of plans.plans(); track plan.id) {
+        <li class="plan">
+          <div class="plan__head">
+            <h3 class="plan__name">{{ plan.name }}</h3>
+            <button type="button" class="fav" [class.fav--on]="plan.isFavorite"
+                    [attr.aria-pressed]="plan.isFavorite"
+                    [attr.aria-label]="plan.isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'"
+                    (click)="toggleFavorite(plan.id)">
+              {{ plan.isFavorite ? '★' : '☆' }}
+            </button>
+          </div>
+          <p class="plan__date">{{ plan.createdAt | date: 'd MMM y' }}</p>
+
+          <p class="plan__macros">
+            <strong>{{ plan.macroGoals.calories }} kcal</strong> ·
+            P {{ plan.macroGoals.protein }} g · C {{ plan.macroGoals.carbs }} g · G {{ plan.macroGoals.fat }} g
+          </p>
+
+          <ul class="plan__items">
+            @for (item of plan.items; track item.ingredientId) {
+              <li>{{ ingredientName(item.ingredientId) }} · {{ item.grams }} g</li>
+            }
+          </ul>
+
+          <div class="plan__actions">
+            <button type="button" class="btn btn--primary btn--sm" (click)="generate(plan.id)" appRipple>
+              🛒 Generar lista
+            </button>
+            <button type="button" class="btn btn--ghost-dark btn--sm" (click)="remove(plan.id, plan.name)">
+              Eliminar
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

@@ -1,0 +1,26 @@
+<ul class="macros" aria-label="Progreso de calorías y macros">
+  @for (row of rows(); track row.label) {
+    <li class="macro">
+      <div class="macro__head">
+        <span class="macro__label">{{ row.label }}</span>
+        <span class="macro__nums" [class.macro__nums--over]="row.over">
+          {{ row.value }} / {{ row.goal }} {{ row.unit }}
+        </span>
+      </div>
+      <div
+        class="macro__track"
+        role="progressbar"
+        [attr.aria-label]="row.label"
+        [attr.aria-valuenow]="row.percent"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        <div
+          class="macro__fill"
+          [style.width.%]="row.percent"
+          [style.background]="row.over ? 'var(--clr-error)' : row.color"
+        ></div>
+      </div>
+    </li>
+  }
+</ul>

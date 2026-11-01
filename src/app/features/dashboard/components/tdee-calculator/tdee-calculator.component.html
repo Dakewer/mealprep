@@ -1,0 +1,64 @@
+<section class="card" aria-labelledby="tdee-title">
+  <h2 id="tdee-title" class="card__title">Tu perfil y metas diarias</h2>
+
+  <div class="tdee-grid">
+    <form class="form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="field">
+        <label for="sex">Sexo</label>
+        <select id="sex" formControlName="sex">
+          <option value="male">Hombre</option>
+          <option value="female">Mujer</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="age">Edad</label>
+          <input id="age" type="number" formControlName="age" />
+          @if (isInvalid('age')) { <small class="field__error">Entre 15 y 100 años.</small> }
+        </div>
+        <div class="field">
+          <label for="weight">Peso (kg)</label>
+          <input id="weight" type="number" formControlName="weightKg" />
+          @if (isInvalid('weightKg')) { <small class="field__error">Entre 30 y 300 kg.</small> }
+        </div>
+        <div class="field">
+          <label for="height">Estatura (cm)</label>
+          <input id="height" type="number" formControlName="heightCm" />
+          @if (isInvalid('heightCm')) { <small class="field__error">Entre 120 y 250 cm.</small> }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="activity">Nivel de actividad</label>
+        <select id="activity" formControlName="activity">
+          @for (o of activityOptions; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="objective">Objetivo</label>
+        <select id="objective" formControlName="objective">
+          @for (o of objectiveOptions; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
+          }
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn--primary" appRipple>Guardar y recalcular</button>
+    </form>
+
+    <div class="result">
+      <p class="result__label">TDEE estimado</p>
+      <p class="result__value">{{ plans.tdee() }} <span>kcal/día</span></p>
+      <p class="result__hint">Meta según tu objetivo: <strong>{{ plans.goals().calories }} kcal</strong></p>
+      <ul class="result__macros">
+        <li><strong>{{ plans.goals().protein }} g</strong> proteína</li>
+        <li><strong>{{ plans.goals().carbs }} g</strong> carbohidratos</li>
+        <li><strong>{{ plans.goals().fat }} g</strong> grasas</li>
+      </ul>
+    </div>
+  </div>
+</section>

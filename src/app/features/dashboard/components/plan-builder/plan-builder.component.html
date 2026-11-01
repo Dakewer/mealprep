@@ -1,0 +1,57 @@
+<section class="card" aria-labelledby="builder-title">
+  <h2 id="builder-title" class="card__title">Crear un plan de comidas</h2>
+
+  <div class="builder">
+    <div class="builder__form">
+      <div class="field">
+        <label for="plan-name">Nombre del plan</label>
+        <input id="plan-name" type="text" placeholder="Ej. Comida del lunes"
+               [value]="planName()" (input)="onName($event)" />
+      </div>
+
+      <div class="field">
+        <label for="ing-select">Agregar ingrediente</label>
+        <div class="add-row">
+          <select id="ing-select" #sel>
+            <option value="">Elige un ingrediente…</option>
+            @for (ing of available(); track ing.id) {
+              <option [value]="ing.id">{{ ing.name }}</option>
+            }
+          </select>
+          <button type="button" class="btn btn--outline btn--sm"
+                  (click)="add(sel.value); sel.value = ''" appRipple>Añadir</button>
+        </div>
+      </div>
+
+      @if (rows().length === 0) {
+        <p class="empty">Aún no hay ingredientes. Agrega algunos y ajusta las cantidades con los sliders.</p>
+      } @else {
+        <ul class="items">
+          @for (row of rows(); track row.ingredientId) {
+            <li class="item">
+              <div class="item__head">
+                <span class="item__name">{{ row.ingredient.name }}</span>
+                <span class="item__grams">{{ row.grams }} g</span>
+                <button type="button" class="item__remove"
+                        [attr.aria-label]="'Quitar ' + row.ingredient.name"
+                        (click)="remove(row.ingredientId)">✕</button>
+              </div>
+              <input type="range" class="item__slider"
+                     [attr.aria-label]="'Gramos de ' + row.ingredient.name"
+                     [min]="sliderMin" [max]="sliderMax" [step]="sliderStep"
+                     [value]="row.grams"
+                     (input)="setGrams(row.ingredientId, +$any($event.target).value)" />
+            </li>
+          }
+        </ul>
+      }
+
+      <button type="button" class="btn btn--primary" (click)="save()" appRipple>Guardar plan</button>
+    </div>
+
+    <aside class="builder__summary" aria-label="Resumen nutricional del plan">
+      <h3 class="summary__title">Tu plan vs. tu meta diaria</h3>
+      <app-macro-bars [totals]="totals()" [goals]="plans.goals()" />
+    </aside>
+  </div>
+</section>
