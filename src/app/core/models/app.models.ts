@@ -34,14 +34,18 @@ export interface NutritionPlan {
   name: string;
   description?: string;
   macroGoals: MacroGoals;
-  createdAt: Date;
+  items: PlanItem[];
+  createdAt: string; // ISO string (se guarda en localStorage)
   isFavorite: boolean;
   tags: string[];
 }
 
+export type IngredientCategory = 'Verduras' | 'Carnes' | 'Abarrotes' | 'Lácteos';
+
 export interface Ingredient {
   id: string;
   name: string;
+  category: IngredientCategory;
   unit: string;
   gramsPer100: number;
   protein: number;
@@ -54,6 +58,7 @@ export interface Ingredient {
 export interface ShoppingItem {
   ingredientId: string;
   ingredientName: string;
+  category: IngredientCategory;
   quantity: number;
   unit: string;
   isChecked: boolean;
@@ -64,5 +69,25 @@ export interface ShoppingList {
   planId: string;
   planName: string;
   items: ShoppingItem[];
-  generatedAt: Date;
+  generatedAt: string; // ISO string
+}
+
+// ── Perfil y cálculo de TDEE ─────────────────────────────────
+export type Sex = 'male' | 'female';
+export type Objective = RegisterData['objective'];
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+
+export interface UserProfile {
+  sex: Sex;
+  age: number;
+  weightKg: number;
+  heightCm: number;
+  activity: ActivityLevel;
+  objective: Objective;
+}
+
+// ── Plan: ingredientes con su cantidad ───────────────────────
+export interface PlanItem {
+  ingredientId: string;
+  grams: number;
 }
