@@ -35,9 +35,23 @@ export interface NutritionPlan {
   description?: string;
   macroGoals: MacroGoals;
   items: PlanItem[];
-  createdAt: string; // ISO string (se guarda en localStorage)
+  createdAt: string; // ISO 8601, lo define el cliente al crear el plan
   isFavorite: boolean;
   tags: string[];
+}
+
+/** Cuerpo que se envía a la API para crear (POST) o reemplazar (PUT) un plan. El `id` lo asigna el servidor. */
+export type PlanPayload = Omit<NutritionPlan, 'id'>;
+
+/** Página de resultados de un listado paginado. */
+export interface Page<T> {
+  items: T[];
+  /** Total de registros que cumplen el filtro (todas las páginas). */
+  total: number;
+  /** Página actual (empieza en 1). */
+  page: number;
+  /** Tamaño de página; `null` si el listado no se paginó. */
+  limit: number | null;
 }
 
 export type IngredientCategory = 'Verduras' | 'Carnes' | 'Abarrotes' | 'Lácteos';

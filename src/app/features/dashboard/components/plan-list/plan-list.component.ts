@@ -31,13 +31,14 @@ export class PlanListComponent {
     }
   }
 
-  toggleFavorite(planId: string): void {
-    this.plans.toggleFavorite(planId);
+  async toggleFavorite(planId: string): Promise<void> {
+    await this.plans.toggleFavorite(planId);
   }
 
-  remove(planId: string, name: string): void {
+  async remove(planId: string, name: string): Promise<void> {
     if (!confirm(`¿Eliminar el plan "${name}"?`)) return;
-    this.plans.deletePlan(planId);
-    this.notif.info('Plan eliminado.');
+    if (await this.plans.deletePlan(planId)) {
+      this.notif.info('Plan eliminado.');
+    }
   }
 }

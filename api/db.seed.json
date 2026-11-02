@@ -1,0 +1,381 @@
+{
+  "plans": [
+    {
+      "id": "plan-001",
+      "name": "Desayuno proteico",
+      "description": "Avena con yogur y plátano para empezar el día.",
+      "macroGoals": {
+        "calories": 411,
+        "protein": 26,
+        "carbs": 68,
+        "fat": 5
+      },
+      "items": [
+        {
+          "ingredientId": "avena",
+          "grams": 60
+        },
+        {
+          "ingredientId": "yogur",
+          "grams": 150
+        },
+        {
+          "ingredientId": "platano",
+          "grams": 100
+        }
+      ],
+      "createdAt": "2026-10-11T12:00:00.000Z",
+      "isFavorite": true,
+      "tags": [
+        "maintenance"
+      ]
+    },
+    {
+      "id": "plan-002",
+      "name": "Comida de oficina",
+      "description": "Pollo con arroz y brócoli, ideal para llevar.",
+      "macroGoals": {
+        "calories": 626,
+        "protein": 65,
+        "carbs": 71,
+        "fat": 8
+      },
+      "items": [
+        {
+          "ingredientId": "pollo",
+          "grams": 180
+        },
+        {
+          "ingredientId": "arroz",
+          "grams": 80
+        },
+        {
+          "ingredientId": "brocoli",
+          "grams": 120
+        }
+      ],
+      "createdAt": "2026-10-12T12:00:00.000Z",
+      "isFavorite": true,
+      "tags": [
+        "deficit"
+      ]
+    },
+    {
+      "id": "plan-003",
+      "name": "Cena ligera",
+      "description": "Atún con espinaca y jitomate.",
+      "macroGoals": {
+        "calories": 264,
+        "protein": 34,
+        "carbs": 7,
+        "fat": 12
+      },
+      "items": [
+        {
+          "ingredientId": "atun",
+          "grams": 120
+        },
+        {
+          "ingredientId": "espinaca",
+          "grams": 80
+        },
+        {
+          "ingredientId": "jitomate",
+          "grams": 100
+        },
+        {
+          "ingredientId": "aceite",
+          "grams": 10
+        }
+      ],
+      "createdAt": "2026-10-13T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "deficit"
+      ]
+    },
+    {
+      "id": "plan-004",
+      "name": "Tacos de res",
+      "description": "Carne molida con tortillas y aguacate.",
+      "macroGoals": {
+        "calories": 763,
+        "protein": 48,
+        "carbs": 63,
+        "fat": 36
+      },
+      "items": [
+        {
+          "ingredientId": "res",
+          "grams": 150
+        },
+        {
+          "ingredientId": "tortilla",
+          "grams": 120
+        },
+        {
+          "ingredientId": "aguacate",
+          "grams": 70
+        },
+        {
+          "ingredientId": "jitomate",
+          "grams": 80
+        }
+      ],
+      "createdAt": "2026-10-14T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "surplus"
+      ]
+    },
+    {
+      "id": "plan-005",
+      "name": "Pasta de volumen",
+      "description": "Pasta con pollo para superávit calórico.",
+      "macroGoals": {
+        "calories": 843,
+        "protein": 63,
+        "carbs": 94,
+        "fat": 22
+      },
+      "items": [
+        {
+          "ingredientId": "pasta",
+          "grams": 120
+        },
+        {
+          "ingredientId": "pollo",
+          "grams": 150
+        },
+        {
+          "ingredientId": "aceite",
+          "grams": 15
+        },
+        {
+          "ingredientId": "jitomate",
+          "grams": 100
+        }
+      ],
+      "createdAt": "2026-10-15T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "surplus"
+      ]
+    },
+    {
+      "id": "plan-006",
+      "name": "Huevos con frijoles",
+      "description": "Desayuno mexicano rápido.",
+      "macroGoals": {
+        "calories": 536,
+        "protein": 35,
+        "carbs": 62,
+        "fat": 17
+      },
+      "items": [
+        {
+          "ingredientId": "huevo",
+          "grams": 150
+        },
+        {
+          "ingredientId": "frijol",
+          "grams": 150
+        },
+        {
+          "ingredientId": "tortilla",
+          "grams": 60
+        }
+      ],
+      "createdAt": "2026-10-16T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "maintenance"
+      ]
+    },
+    {
+      "id": "plan-007",
+      "name": "Bowl de camote",
+      "description": "Camote, pollo y brócoli al horno.",
+      "macroGoals": {
+        "calories": 470,
+        "protein": 56,
+        "carbs": 47,
+        "fat": 6
+      },
+      "items": [
+        {
+          "ingredientId": "camote",
+          "grams": 200
+        },
+        {
+          "ingredientId": "pollo",
+          "grams": 160
+        },
+        {
+          "ingredientId": "brocoli",
+          "grams": 100
+        }
+      ],
+      "createdAt": "2026-10-17T12:00:00.000Z",
+      "isFavorite": true,
+      "tags": [
+        "maintenance"
+      ]
+    },
+    {
+      "id": "plan-008",
+      "name": "Smoothie post-entreno",
+      "description": "Leche, plátano y avena.",
+      "macroGoals": {
+        "calories": 364,
+        "protein": 18,
+        "carbs": 69,
+        "fat": 3
+      },
+      "items": [
+        {
+          "ingredientId": "leche",
+          "grams": 300
+        },
+        {
+          "ingredientId": "platano",
+          "grams": 120
+        },
+        {
+          "ingredientId": "avena",
+          "grams": 40
+        }
+      ],
+      "createdAt": "2026-10-18T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "surplus"
+      ]
+    },
+    {
+      "id": "plan-009",
+      "name": "Ensalada de atún",
+      "description": "Atún con espinaca, aguacate y jitomate.",
+      "macroGoals": {
+        "calories": 299,
+        "protein": 41,
+        "carbs": 13,
+        "fat": 11
+      },
+      "items": [
+        {
+          "ingredientId": "atun",
+          "grams": 140
+        },
+        {
+          "ingredientId": "espinaca",
+          "grams": 100
+        },
+        {
+          "ingredientId": "aguacate",
+          "grams": 60
+        },
+        {
+          "ingredientId": "jitomate",
+          "grams": 100
+        }
+      ],
+      "createdAt": "2026-10-19T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "deficit"
+      ]
+    },
+    {
+      "id": "plan-010",
+      "name": "Arroz con frijoles",
+      "description": "Clásico económico y balanceado.",
+      "macroGoals": {
+        "calories": 696,
+        "protein": 34,
+        "carbs": 113,
+        "fat": 11
+      },
+      "items": [
+        {
+          "ingredientId": "arroz",
+          "grams": 90
+        },
+        {
+          "ingredientId": "frijol",
+          "grams": 180
+        },
+        {
+          "ingredientId": "huevo",
+          "grams": 100
+        }
+      ],
+      "createdAt": "2026-10-20T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "maintenance"
+      ]
+    },
+    {
+      "id": "plan-011",
+      "name": "Cena alta en proteína",
+      "description": "Pollo con espinaca y yogur como aderezo.",
+      "macroGoals": {
+        "calories": 400,
+        "protein": 73,
+        "carbs": 6,
+        "fat": 8
+      },
+      "items": [
+        {
+          "ingredientId": "pollo",
+          "grams": 200
+        },
+        {
+          "ingredientId": "espinaca",
+          "grams": 100
+        },
+        {
+          "ingredientId": "yogur",
+          "grams": 80
+        }
+      ],
+      "createdAt": "2026-10-21T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "deficit"
+      ]
+    },
+    {
+      "id": "plan-012",
+      "name": "Merienda de yogur",
+      "description": "Yogur griego con avena y plátano.",
+      "macroGoals": {
+        "calories": 306,
+        "protein": 26,
+        "carbs": 45,
+        "fat": 3
+      },
+      "items": [
+        {
+          "ingredientId": "yogur",
+          "grams": 200
+        },
+        {
+          "ingredientId": "avena",
+          "grams": 30
+        },
+        {
+          "ingredientId": "platano",
+          "grams": 80
+        }
+      ],
+      "createdAt": "2026-10-22T12:00:00.000Z",
+      "isFavorite": false,
+      "tags": [
+        "deficit"
+      ]
+    }
+  ],
+  "users": []
+}
