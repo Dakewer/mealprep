@@ -63,7 +63,7 @@ export class PlanBuilderComponent {
     this.planName.set((event.target as HTMLInputElement).value);
   }
 
-  save(): void {
+  async save(): Promise<void> {
     if (!this.planName().trim()) {
       this.notif.error('Ponle un nombre a tu plan para poder guardarlo.');
       return;
@@ -72,7 +72,8 @@ export class PlanBuilderComponent {
       this.notif.warning('Agrega al menos un ingrediente a tu plan.');
       return;
     }
-    this.plans.savePlan(this.planName(), this.items());
+    const plan = await this.plans.savePlan(this.planName(), this.items());
+    if (!plan) return; // la API falló: el interceptor ya avisó y se conserva lo escrito
     this.notif.success('Plan nutricional guardado correctamente.');
     this.planName.set('');
     this.items.set([]);
