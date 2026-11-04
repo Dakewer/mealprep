@@ -48,7 +48,7 @@ npx json-server --watch api/db.json --port 3000 --delay 800
 
 **Limitaciones que asumimos.**
 
-- No valida los datos: acepta cualquier cuerpo. Las validaciones viven en los formularios del frontend; con una API real, el servidor debe repetirlas.
+- No valida los datos: acepta cualquier cuerpo. Las validaciones viven en los formulaciones del frontend; con una API real, el servidor debe repetirlas.
 - No tiene autenticación ni usuarios reales (esta entrega no la pide). Por eso los planes **no están separados por usuario**: todos los usuarios que usen la misma API ven los mismos planes.
 - Los datos viven en un archivo local, y no se puede desplegar tal cual en un hosting estático.
 - Solo los **planes** usan la API. El perfil del usuario y las listas de compras siguen guardándose en `localStorage`.
@@ -190,7 +190,19 @@ _Pendiente. Aquí se documentarán la lista, la ruta de detalle, el modal de con
 
 ### Formularios y validaciones (@LuisCacho-py)
 
-_Pendiente. Aquí se documentarán el formulario de alta, el de edición con datos precargados, el validador personalizado, el guard de salida y el envío de login y registro._
+- **Validadores personalizados (`src/app/core/validators/plan.validators.ts`, C1):**
+  - `notBlankValidator()`: impide que el nombre contenga únicamente espacios en blanco.
+  - `uniquePlanNameValidator()`: verifica que el nombre del plan no se repita frente a los planes existentes (ignorando el nombre original cuando se edita el mismo plan).
+  - `minIngredientsValidator(min)`: exige al menos `N` ingredientes en el `FormArray` del plan.
+  - `ingredientGramsRangeValidator(10, 600)`: valida que cada ingrediente tenga una cantidad en gramos dentro del rango permitido (`10 g` a `600 g`).
+- **Guard de salida (`src/app/core/guards/unsaved-changes.guard.ts`, C1):**
+  - `unsavedChangesGuard` (`CanDeactivateFn<HasUnsavedChanges>`) protege `/dashboard` y `/dashboard/planes/:id/editar` para advertir al usuario mediante el modal accesible (o confirmación del navegador) si intenta salir con cambios sin guardar.
+- **Formulario reactivo de alta (`src/app/features/dashboard/components/plan-builder/`, C2):**
+  - Construido con `ReactiveFormsModule` (`FormGroup` + `FormArray`), muestra errores específicos por campo (`name`, `description`, lista de ingredientes y gramos por ítem), deshabilita los controles y el botón de envío con indicador de carga mientras espera a la API (`isSaving`) y notifica el resultado con toasts.
+- **Edición con datos precargados (`src/app/features/dashboard/components/plan-edit/`, ruta `/dashboard/planes/:id/editar`, C3):**
+  - Reutiliza `PlanBuilderComponent` pasándole `[initialPlan]="plan()"`, precarga nombre, descripción e ingredientes, envía `PUT /plans/:id` mediante `PlanService.updatePlan()` y contempla estado de carga y vista `404` cuando el plan no existe.
+- **Envío de Login y Registro a la API (`src/app/core/services/auth.service.ts`, C4):**
+  - `AuthService.login()` y `AuthService.register()` envían los datos de los formularios reactivos a `POST /users` en la API simulada sin requerir tokens ni sesiones en el servidor, manteniendo el estado de interfaz local para los guards de rutas.
 
 ## 5. Flujo de trabajo del equipo
 
@@ -210,10 +222,11 @@ src/app/core/
   config/                 token API_BASE_URL
   data/                   catálogo de ingredientes
   errors/                 ApiError
-  guards/                 authGuard, publicGuard
+  guards/                 authGuard, publicGuard y unsavedChangesGuard
   interceptors/           interceptor global de errores
   models/                 interfaces tipadas
   services/               Auth, Notification, Nutrition, Plan y PlansApi
+  validators/             validadores personalizados de planes
 src/app/features/         landing, páginas públicas, auth y dashboard
 src/app/shared/           toast, barras de macros y directiva ripple
 ```
