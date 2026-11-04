@@ -86,10 +86,10 @@ export class PlanDetailComponent {
     };
   });
 
-  toggleFavorite(): void {
+  async toggleFavorite(): Promise<void> {
     const currentPlan = this.plan();
     if (currentPlan) {
-      this.plans.toggleFavorite(currentPlan.id);
+      await this.plans.toggleFavorite(currentPlan.id);
       const isFavNow = !currentPlan.isFavorite;
       this.notif.info(
         isFavNow
@@ -116,13 +116,15 @@ export class PlanDetailComponent {
     }
   }
 
-  onDeleteConfirmed(): void {
+  async onDeleteConfirmed(): Promise<void> {
     const currentPlan = this.plan();
     if (currentPlan) {
-      this.plans.deletePlan(currentPlan.id);
+      const ok = await this.plans.deletePlan(currentPlan.id);
       this.confirmModal().close();
-      this.notif.success(`El plan "${currentPlan.name}" fue eliminado.`);
-      this.router.navigate(['/dashboard']);
+      if (ok) {
+        this.notif.success(`El plan "${currentPlan.name}" fue eliminado.`);
+        this.router.navigate(['/dashboard']);
+      }
     }
   }
 

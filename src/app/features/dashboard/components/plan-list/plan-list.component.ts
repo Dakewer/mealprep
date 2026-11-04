@@ -150,8 +150,8 @@ export class PlanListComponent {
     }
   }
 
-  toggleFavorite(planId: string): void {
-    this.plans.toggleFavorite(planId);
+  async toggleFavorite(planId: string): Promise<void> {
+    await this.plans.toggleFavorite(planId);
   }
 
   // ── Eliminación Accesible con Modal (B4) ──────────────────
@@ -160,11 +160,17 @@ export class PlanListComponent {
     this.confirmModal().open(plan.name);
   }
 
-  onDeleteConfirmed(): void {
+  async remove(planId: string, name: string): Promise<void> {
+    this.requestDelete({ id: planId, name } as NutritionPlan);
+  }
+
+  async onDeleteConfirmed(): Promise<void> {
     const target = this.planPendingDeletion();
     if (target) {
-      this.plans.deletePlan(target.id);
-      this.notif.success(`Plan "${target.name}" eliminado correctamente.`);
+      const success = await this.plans.deletePlan(target.id);
+      if (success) {
+        this.notif.success(`Plan "${target.name}" eliminado correctamente.`);
+      }
       this.confirmModal().close();
       this.planPendingDeletion.set(null);
 
@@ -179,21 +185,19 @@ export class PlanListComponent {
     this.planPendingDeletion.set(null);
   }
 
-  // ── Reintento y Demostración de Carga (B1) ────────────────
-  simulateReload(): void {
+  // ── Reintento y Carga (B1 conectado a la API) ─────────────
+  async simulateReload(): Promise<void> {
     this.isLoading.set(true);
     this.hasError.set(false);
-    setTimeout(() => {
-      this.isLoading.set(false);
-    }, 800);
+    await this.plans.loadPlans();
+    this.isLoading.set(false);
   }
 
-  retryLoad(): void {
+  async retryLoad(): Promise<void> {
     this.hasError.set(false);
     this.isLoading.set(true);
-    setTimeout(() => {
-      this.isLoading.set(false);
-      this.notif.info('Planes recargados exitosamente.');
-    }, 700);
+    await this.plans.loadPlans();
+    this.isLoading.set(false);
+    this.notif.info('Planes recargados exitosamente.');
   }
 }
