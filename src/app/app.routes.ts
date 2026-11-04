@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, publicGuard } from './core/guards/auth.guard';
+import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
 export const routes: Routes = [
   // ── Public routes (with landing layout) ─────────────────
@@ -85,6 +86,7 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     canActivate: [authGuard],
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./features/dashboard/dashboard.component').then(
         m => m.DashboardComponent
@@ -99,6 +101,16 @@ export const routes: Routes = [
         './features/dashboard/components/plan-detail/plan-detail.component'
       ).then(m => m.PlanDetailComponent),
     title: 'Detalle del Plan – Deficcitto',
+  },
+  {
+    path: 'dashboard/planes/:id/editar',
+    canActivate: [authGuard],
+    canDeactivate: [unsavedChangesGuard],
+    loadComponent: () =>
+      import(
+        './features/dashboard/components/plan-edit/plan-edit.component'
+      ).then(m => m.PlanEditComponent),
+    title: 'Editar Plan – Deficcitto',
   },
 
   // ── Fallback ──────────────────────────────────────────────
