@@ -1,5 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import {
+  HasUnsavedChanges,
+  UNSAVED_CHANGES_MESSAGE,
+} from '../../core/guards/unsaved-changes.guard';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { PlanService } from '../../core/services/plan.service';
@@ -21,11 +25,13 @@ export type DashboardTab = 'resumen' | 'crear' | 'planes' | 'compras';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
-export class DashboardComponent {
+export class DashboardComponent implements HasUnsavedChanges {
   authService  = inject(AuthService);
   notifService = inject(NotificationService);
   plans        = inject(PlanService);
   private router = inject(Router);
+
+  planBuilder = viewChild<PlanBuilderComponent>(PlanBuilderComponent);
 
   readonly tabs: { id: DashboardTab; label: string }[] = [
     { id: 'resumen', label: 'Resumen' },
@@ -36,8 +42,26 @@ export class DashboardComponent {
 
   activeTab = signal<DashboardTab>('resumen');
 
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
+    }
+  }
+
   setTab(tab: DashboardTab): void {
+    if (tab !== this.activeTab() && this.hasUnsavedChanges()) {
+      const ok =
+        typeof window !== 'undefined' && typeof window.confirm === 'function'
+          ? window.confirm(UNSAVED_CHANGES_MESSAGE)
+          : true;
+      if (!ok) return;
+    }
     this.activeTab.set(tab);
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.planBuilder()?.hasUnsavedChanges() ?? false;
   }
 
   logout(): void {
