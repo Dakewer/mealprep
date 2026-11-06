@@ -1,0 +1,104 @@
+<div class="plan-edit-view">
+  <!-- Topbar consistente con el Detalle y el Dashboard -->
+  <header class="edit-topbar">
+    <div class="edit-topbar__container">
+      <a routerLink="/dashboard" class="edit-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9a9 9 0 0 0-9-9z"/>
+          <path d="M12 7v5"/>
+          <path d="M9 10l3 2 3-2"/>
+        </svg>
+        <span>Deficcitto</span>
+      </a>
+
+      <nav class="edit-topbar__nav" aria-label="Navegación de edición">
+        @if (plan()) {
+          <a
+            [routerLink]="['/dashboard/planes', plan()!.id]"
+            class="btn btn--ghost-dark btn--sm back-btn"
+            appRipple
+          >
+            ← Volver al detalle
+          </a>
+        } @else {
+          <a routerLink="/dashboard" class="btn btn--ghost-dark btn--sm back-btn" appRipple>
+            ← Volver al Dashboard
+          </a>
+        }
+      </nav>
+    </div>
+  </header>
+
+  <main class="edit-main">
+    @if (plans.plansLoading() && !plan()) {
+      <app-loading-state message="Cargando datos del plan para editar…" />
+    } @else if (!plan()) {
+      <!-- Caso 404: Plan no encontrado -->
+      <div class="not-found-card" role="alert">
+        <div class="not-found-icon" aria-hidden="true">
+          <svg viewBox="0 0 100 100" width="70" height="70" fill="none" stroke="currentColor">
+            <circle cx="50" cy="50" r="44" stroke="#fecaca" stroke-width="2.5" stroke-dasharray="4 4" fill="#fef2f2" />
+            <g transform="rotate(45, 50, 50)">
+              <line x1="50" y1="50" x2="50" y2="85" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round" />
+              <path d="M 43 45 C 43 54, 57 54, 57 45" stroke="#ef4444" stroke-width="3" fill="none" />
+              <line x1="43" y1="45" x2="43" y2="20" stroke="#ef4444" stroke-width="2.5" />
+              <line x1="50" y1="46" x2="50" y2="20" stroke="#ef4444" stroke-width="2.5" />
+              <line x1="57" y1="45" x2="57" y2="20" stroke="#ef4444" stroke-width="2.5" />
+            </g>
+            <g transform="rotate(-45, 50, 50)">
+              <line x1="50" y1="50" x2="50" y2="85" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round" />
+              <path d="M 50 50 L 50 20 Q 57 23 57 35 Q 57 47 50 50 Z" fill="#ef4444" fill-opacity="0.3" stroke="#ef4444" stroke-width="2.5" />
+            </g>
+            <circle cx="50" cy="50" r="4" fill="#dc2626" />
+          </svg>
+        </div>
+
+        <h1 class="not-found-title">Plan no encontrado</h1>
+        <p class="not-found-message">
+          No pudimos cargar el plan con ID <code>"{{ planId() }}"</code> para editarlo. Es posible que haya sido eliminado.
+        </p>
+
+        <div class="not-found-actions">
+          <a routerLink="/dashboard" class="btn btn--primary btn--sm" appRipple>
+            ← Regresar a Mis Planes
+          </a>
+        </div>
+      </div>
+    } @else {
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs" aria-label="Ruta de navegación">
+        <ol role="list">
+          <li><a routerLink="/dashboard">Dashboard</a></li>
+          <li aria-hidden="true">/</li>
+          <li><a routerLink="/dashboard">Mis planes</a></li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <a [routerLink]="['/dashboard/planes', plan()!.id]">{{ plan()!.name }}</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">Editar</li>
+        </ol>
+      </nav>
+
+      <!-- Reutilización del formulario de alta en modo edición (C3) -->
+      <app-plan-builder
+        #builder
+        [initialPlan]="plan()"
+        (saved)="onSaved($event)"
+        (cancelled)="onCancel()"
+      />
+    }
+
+    <!-- Modal accesible para confirmar salida con cambios sin guardar (C1) -->
+    <app-confirm-modal
+      #discardModal
+      title="¿Salir sin guardar cambios?"
+      message="Tienes cambios sin guardar en este plan. Si sales ahora, se perderán tus modificaciones."
+      confirmLabel="Descartar cambios"
+      cancelLabel="Seguir editando"
+      variant="warning"
+      (confirmed)="onDiscardConfirmed()"
+      (cancelled)="onDiscardCancelled()"
+    />
+  </main>
+</div>

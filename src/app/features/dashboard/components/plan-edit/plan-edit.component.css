@@ -1,0 +1,110 @@
+.plan-edit-view {
+  min-height: 100dvh;
+  background: var(--clr-light-50, #f9fafb);
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-topbar {
+  background: #fff;
+  border-bottom: 1px solid var(--clr-light-200, #e5e7eb);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.edit-topbar__container {
+  max-width: 1100px;
+  margin-inline: auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.edit-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--clr-primary-600, #16a34a);
+  text-decoration: none;
+}
+
+.back-btn {
+  text-decoration: none;
+}
+
+.edit-main {
+  max-width: 1100px;
+  width: 100%;
+  margin-inline: auto;
+  padding: 2rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.breadcrumbs ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-on-light-3, #6b7280);
+}
+
+.breadcrumbs a {
+  color: var(--clr-primary-600, #16a34a);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.not-found-card {
+  background: #fff;
+  border: 1px solid var(--clr-light-200, #e5e7eb);
+  border-radius: var(--radius-2xl, 20px);
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  max-width: 520px;
+  margin: 3rem auto;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+.not-found-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--text-on-light, #111827);
+  margin: 0;
+}
+
+.not-found-message {
+  font-size: 0.9375rem;
+  color: var(--text-on-light-3, #6b7280);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.not-found-message code {
+  background: var(--clr-light-100, #f3f4f6);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #dc2626;
+}
+
+.not-found-actions {
+  margin-top: 0.5rem;
+}
