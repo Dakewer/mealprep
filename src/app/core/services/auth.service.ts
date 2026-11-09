@@ -43,9 +43,10 @@ export class AuthService {
     }
 
     const user: User = {
-      id: 'user-001',
+      id: credentials.email.includes('admin') ? 'admin-001' : 'user-001',
       name: this.getNameFromEmail(credentials.email),
       email: credentials.email,
+      role: credentials.email.toLowerCase().includes('admin') ? 'admin' : 'user',
       avatarInitials: this.getInitials(this.getNameFromEmail(credentials.email)),
     };
 
@@ -89,6 +90,7 @@ export class AuthService {
       id: `user-${Date.now()}`,
       name: data.name,
       email: data.email,
+      role: 'user',
       avatarInitials: this.getInitials(data.name),
     };
 
