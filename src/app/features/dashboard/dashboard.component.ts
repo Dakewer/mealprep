@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { PlanService } from '../../core/services/plan.service';
@@ -15,7 +15,7 @@ export type DashboardTab = 'resumen' | 'crear' | 'planes' | 'compras';
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    RouterLink, RippleDirective,
+    RippleDirective,
     TdeeCalculatorComponent, PlanBuilderComponent, PlanListComponent, ShoppingListComponent,
   ],
   templateUrl: './dashboard.component.html',
