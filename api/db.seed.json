@@ -28,7 +28,8 @@
       "isFavorite": true,
       "tags": [
         "maintenance"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-002",
@@ -58,7 +59,8 @@
       "isFavorite": true,
       "tags": [
         "deficit"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-003",
@@ -92,7 +94,8 @@
       "isFavorite": false,
       "tags": [
         "deficit"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-004",
@@ -126,7 +129,8 @@
       "isFavorite": false,
       "tags": [
         "surplus"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-005",
@@ -160,7 +164,8 @@
       "isFavorite": false,
       "tags": [
         "surplus"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-006",
@@ -190,7 +195,8 @@
       "isFavorite": false,
       "tags": [
         "maintenance"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-007",
@@ -220,7 +226,8 @@
       "isFavorite": true,
       "tags": [
         "maintenance"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-008",
@@ -250,7 +257,8 @@
       "isFavorite": false,
       "tags": [
         "surplus"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-009",
@@ -284,7 +292,8 @@
       "isFavorite": false,
       "tags": [
         "deficit"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-010",
@@ -314,7 +323,8 @@
       "isFavorite": false,
       "tags": [
         "maintenance"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-011",
@@ -344,7 +354,8 @@
       "isFavorite": false,
       "tags": [
         "deficit"
-      ]
+      ],
+      "ownerId": "usr-002"
     },
     {
       "id": "plan-012",
@@ -374,8 +385,28 @@
       "isFavorite": false,
       "tags": [
         "deficit"
-      ]
+      ],
+      "ownerId": "usr-002"
     }
   ],
-  "users": []
+  "users": [
+    {
+      "id": "usr-admin-1",
+      "name": "Admin Deficcitto",
+      "email": "admin@deficcitto.com",
+      "passwordHash": "$2b$10$hnBosuIE.8/hdHL4LujxpeZKBP..zU0pfoatGZKWdbjQPEot9B/pa",
+      "role": "admin",
+      "avatarInitials": "AD",
+      "createdAt": "2026-10-01T08:00:00.000Z"
+    },
+    {
+      "id": "usr-002",
+      "name": "Carlos Fitness",
+      "email": "carlos@deficcitto.com",
+      "passwordHash": "$2b$10$X0WkJZq6VTBmS32k.Vu5sut2YujEEfQSPpZqP1Z7VgR211QlibObS",
+      "role": "user",
+      "avatarInitials": "CF",
+      "createdAt": "2026-10-15T10:30:00.000Z"
+    }
+  ]
 }
