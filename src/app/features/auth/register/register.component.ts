@@ -2,7 +2,6 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { NotificationService } from '../../../core/services/notification.service';
 import { RippleDirective } from '../../../shared/directives/ripple.directive';
 
 /** Validador personalizado: las contraseñas deben coincidir */
@@ -20,17 +19,19 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
   styleUrl: './register.component.css',
 })
 export class RegisterComponent {
-  private fb           = inject(FormBuilder);
-  private authService  = inject(AuthService);
-  private notifService = inject(NotificationService);
-  private router       = inject(Router);
+  private fb          = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router      = inject(Router);
 
-  // ── UI state ─────────────────────────────────────────────
+  // ── Estado de UI ─────────────────────────────────────────
   showPassword        = signal(false);
   showConfirmPassword = signal(false);
-  isLoading           = signal(false);
 
-  // ── Form ─────────────────────────────────────────────────
+  /** Señales del servicio: el estado de carga y el error de la API se pintan en el formulario. */
+  readonly isLoading = this.authService.isLoading;
+  readonly error     = this.authService.error;
+
+  // ── Formulario ───────────────────────────────────────────
   registerForm = this.fb.group(
     {
       name: ['', [
@@ -51,7 +52,7 @@ export class RegisterComponent {
     { validators: passwordMatchValidator }
   );
 
-  // ── Getters ───────────────────────────────────────────────
+  // ── Getters ──────────────────────────────────────────────
   get name()            { return this.registerForm.get('name')!; }
   get email()           { return this.registerForm.get('email')!; }
   get password()        { return this.registerForm.get('password')!; }
@@ -87,15 +88,12 @@ export class RegisterComponent {
   togglePassword():        void { this.showPassword.update(v => !v); }
   toggleConfirmPassword(): void { this.showConfirmPassword.update(v => !v); }
 
-  // ── Submit ────────────────────────────────────────────────
+  // ── Submit ───────────────────────────────────────────────
   async onSubmit(): Promise<void> {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
-      this.notifService.warning('Completa todos los campos correctamente antes de continuar.');
       return;
     }
-
-    this.isLoading.set(true);
 
     const val = this.registerForm.value;
     const success = await this.authService.register({
@@ -107,13 +105,8 @@ export class RegisterComponent {
       acceptTerms:     val.acceptTerms!,
     });
 
-    this.isLoading.set(false);
-
     if (success) {
-      this.notifService.success('¡Cuenta creada! Bienvenido a Deficcitto 🎉');
-      setTimeout(() => this.router.navigate(['/dashboard']), 1200);
-    } else {
-      this.notifService.error('Ocurrió un error al crear la cuenta. Intenta de nuevo.');
+      await this.router.navigate(['/dashboard']);
     }
   }
 }

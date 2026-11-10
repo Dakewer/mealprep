@@ -112,19 +112,9 @@
       }
     </div>
 
-    <!-- Remember me -->
-    <div class="auth-form__remember">
-      <label class="auth-form__checkbox-label">
-        <input
-          type="checkbox"
-          formControlName="rememberMe"
-          class="auth-form__checkbox"
-          aria-label="Recordarme en este dispositivo"
-        />
-        <span class="auth-form__checkbox-custom" aria-hidden="true"></span>
-        <span>Recordarme en este dispositivo</span>
-      </label>
-    </div>
+    @if (error()) {
+      <p class="form-error" role="alert">{{ error() }}</p>
+    }
 
     <!-- Submit -->
     <button
@@ -146,13 +136,6 @@
   <!-- Divider -->
   <div class="auth-form__divider" role="separator">
     <span>o</span>
-  </div>
-
-  <!-- Demo hint -->
-  <div class="auth-form__demo">
-    <p class="auth-form__demo-text">
-      💡 <strong>Demo:</strong> Usa cualquier correo y contraseña de 6+ caracteres
-    </p>
   </div>
 
   <!-- Redirect -->
