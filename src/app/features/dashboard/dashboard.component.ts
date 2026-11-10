@@ -7,6 +7,7 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { PlanService } from '../../core/services/plan.service';
+import { HasRoleDirective } from '../../shared/directives/has-role.directive';
 import { RippleDirective } from '../../shared/directives/ripple.directive';
 import { PlanBuilderComponent } from './components/plan-builder/plan-builder.component';
 import { PlanListComponent } from './components/plan-list/plan-list.component';
@@ -19,7 +20,7 @@ export type DashboardTab = 'resumen' | 'crear' | 'planes' | 'compras';
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    RouterLink, RippleDirective,
+    RouterLink, RippleDirective, HasRoleDirective,
     TdeeCalculatorComponent, PlanBuilderComponent, PlanListComponent, ShoppingListComponent,
   ],
   templateUrl: './dashboard.component.html',

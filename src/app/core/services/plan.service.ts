@@ -104,11 +104,13 @@ export class PlanService {
 
   /** Crea un plan. Devuelve el plan guardado, o `null` si la API falló. */
   async savePlan(name: string, items: PlanItem[], description = ''): Promise<NutritionPlan | null> {
+    this._plansError.set(null);
     try {
       const plan = await firstValueFrom(this.plansApi.create(this.buildPayload(name, items, description)));
       this._plans.update(list => [plan, ...list]);
       return plan;
-    } catch {
+    } catch (error) {
+      this._plansError.set(toApiError(error));
       return null; // el interceptor ya avisó al usuario
     }
   }
@@ -117,6 +119,7 @@ export class PlanService {
   async updatePlan(
     id: string, name: string, items: PlanItem[], description = '',
   ): Promise<NutritionPlan | null> {
+    this._plansError.set(null);
     const current = this._plans().find(p => p.id === id);
     try {
       const payload: PlanPayload = {
@@ -127,31 +130,45 @@ export class PlanService {
       const plan = await firstValueFrom(this.plansApi.update(id, payload));
       this._plans.update(list => list.map(p => (p.id === id ? plan : p)));
       return plan;
-    } catch {
+    } catch (error) {
+      this._plansError.set(toApiError(error));
       return null;
     }
   }
 
-  /** Elimina un plan. Devuelve `true` si se borró. */
+  /** Elimina un plan. Devuelve `true` si se borró. Si responde 403 u otro error, revierte el estado optimista. */
   async deletePlan(id: string): Promise<boolean> {
+    this._plansError.set(null);
+    const snapshot = this._plans();
+    this._plans.update(list => list.filter(p => p.id !== id));
     try {
       await firstValueFrom(this.plansApi.remove(id));
-      this._plans.update(list => list.filter(p => p.id !== id));
       return true;
-    } catch {
+    } catch (error) {
+      this._plans.set(snapshot);
+      this._plansError.set(toApiError(error));
       return false;
     }
   }
 
-  /** Marca o desmarca un plan como favorito. Devuelve `true` si se guardó. */
+  /** Marca o desmarca un plan como favorito. Devuelve `true` si se guardó; si falla (ej. 403), revierte la estrella. */
   async toggleFavorite(id: string): Promise<boolean> {
+    this._plansError.set(null);
     const current = this._plans().find(p => p.id === id);
     if (!current) return false;
+    const previousFavorite = current.isFavorite;
+    this._plans.update(list =>
+      list.map(p => (p.id === id ? { ...p, isFavorite: !previousFavorite } : p)),
+    );
     try {
-      const plan = await firstValueFrom(this.plansApi.patch(id, { isFavorite: !current.isFavorite }));
+      const plan = await firstValueFrom(this.plansApi.patch(id, { isFavorite: !previousFavorite }));
       this._plans.update(list => list.map(p => (p.id === id ? plan : p)));
       return true;
-    } catch {
+    } catch (error) {
+      this._plans.update(list =>
+        list.map(p => (p.id === id ? { ...p, isFavorite: previousFavorite } : p)),
+      );
+      this._plansError.set(toApiError(error));
       return false;
     }
   }

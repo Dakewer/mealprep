@@ -6,6 +6,9 @@
       <span>Deficcitto</span>
     </a>
     <div class="dash-topbar__right">
+      <a *appHasRole="'admin'" routerLink="/admin/usuarios" class="btn btn--outline btn--sm" appRipple>
+        Usuarios
+      </a>
       <span class="dash-user">
         <span class="dash-user__avatar" aria-hidden="true">{{ authService.currentUser()?.avatarInitials }}</span>
         <span class="dash-user__name">{{ authService.currentUser()?.name }}</span>
