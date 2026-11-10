@@ -175,6 +175,37 @@ describe('PlanService', () => {
     expect(service.plans().length).toBe(1);
   });
 
+  it('el borrado de un plan con 403 revierte el cambio optimista y deja el plan en la lista', async () => {
+    setup([plan('1', { ownerId: 'usr-001' }), plan('2', { ownerId: 'usr-002' })]);
+    await Promise.resolve();
+
+    const pending = service.deletePlan('1');
+    // Durante la petición optimista se quita temporalmente, pero al recibir 403 se restaura
+    http
+      .expectOne(`${BASE}/plans/1`)
+      .flush({ message: 'Este plan pertenece a otro usuario.' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(await pending).toBe(false);
+    expect(service.plans().map(p => p.id)).toEqual(['1', '2']);
+    expect(service.plansError()?.status).toBe(403);
+  });
+
+  it('si toggleFavorite recibe 403 revierte la estrella a su estado anterior', async () => {
+    setup([plan('1', { isFavorite: false, ownerId: 'usr-001' })]);
+    await Promise.resolve();
+
+    const pending = service.toggleFavorite('1');
+    expect(service.plans()[0].isFavorite).toBe(true);
+
+    http
+      .expectOne(`${BASE}/plans/1`)
+      .flush({ message: 'Este plan pertenece a otro usuario.' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(await pending).toBe(false);
+    expect(service.plans()[0].isFavorite).toBe(false);
+    expect(service.plansError()?.status).toBe(403);
+  });
+
   it('genera una lista de compras a partir de un plan cargado', async () => {
     setup([
       plan('1', {

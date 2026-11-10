@@ -39,6 +39,7 @@ describe('LoginComponent', () => {
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     auth = TestBed.inject(AuthService);
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     fixture.detectChanges();
   }
 
@@ -123,3 +124,4 @@ describe('LoginComponent', () => {
     expect(navSpy).toHaveBeenCalledWith('/dashboard/planes/plan-001');
   });
 });
+
