@@ -4,6 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { API_BASE_URL } from '../config/api-base-url.token';
 import { httpErrorInterceptor } from '../interceptors/http-error.interceptor';
 import { NutritionPlan, PlanPayload } from '../models/app.models';
+import { expInSeconds, fakeJwt } from '../testing/fake-jwt';
+import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
 import { PlanService } from './plan.service';
 
@@ -51,6 +53,31 @@ describe('PlanService', () => {
     await Promise.resolve();
     expect(service.plans().length).toBe(2);
     expect(service.plansStatus()).toBe('loaded');
+  });
+
+  it('al cambiar de cuenta vacía los planes y pide los del nuevo usuario; al salir los vacía', async () => {
+    setup([plan('1')]);
+    await Promise.resolve();
+    expect(service.plans().map(p => p.id)).toEqual(['1']);
+
+    const auth = TestBed.inject(AuthService);
+    const login = auth.login({ email: 'ana@test.com', password: 'Clave12345' });
+    http.expectOne(`${BASE}/auth/login`).flush({
+      token: fakeJwt({ exp: expInSeconds(3600), sub: 'usr-2' }),
+      user: { id: 'usr-2', name: 'Ana', email: 'ana@test.com' },
+    });
+    await login;
+    TestBed.tick();
+
+    http.expectOne(r => r.url === `${BASE}/plans`).flush([plan('7')]);
+    await new Promise(resolve => setTimeout(resolve));
+    expect(service.plans().map(p => p.id)).toEqual(['7']);
+
+    auth.logout();
+    TestBed.tick();
+
+    expect(service.plans()).toEqual([]);
+    expect(service.plansStatus()).toBe('idle');
   });
 
   it('si la API falla, deja el estado en error y avisa una sola vez', async () => {
