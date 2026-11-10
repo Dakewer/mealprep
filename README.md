@@ -8,7 +8,7 @@ Aplicación web para planificar comidas: calcula tu TDEE y tus metas de macros, 
 |---|---|
 | [@Dakewer](https://github.com/Dakewer) | Datos, errores, documentación, backend y autenticación |
 | [@Frijol75](https://github.com/Frijol75) | Lista, búsqueda, paginación, detalle y estados de interfaz |
-| [@LuisCacho-py](https://github.com/LuisCacho-py) | Formularios (alta, edición, validaciones, guard de salida) |
+| [@LuisCacho-py](https://github.com/LuisCacho-py) | Formularios (alta, edición, login/registro), directivas de permisos (`*appHasRole`, `*appCanManage`) y manejo de 403 |
 
 ## Cómo correrlo
 
@@ -275,7 +275,19 @@ El secreto está en `JWT_SECRET` (`.env`, no versionado) y debe tener al menos 1
 | `CORS_ORIGIN` | No (`http://localhost:4200`) | `http://localhost:4200` | Orígenes permitidos, separados por coma. |
 | `API_DELAY_MS` | No (`0` por defecto) | `800` | Retraso artificial para ver los estados de carga. |
 
-### 4.5 Roles y regla de dueño en `/plans`
+### 4.5 Roles y permisos
+
+| Acción / vista | Invitado | user | admin |
+|---|---|---|---|
+| Landing, características, testimonios | ✅ | ✅ | ✅ |
+| Login / registro | ✅ | ❌ redirige a /dashboard | ❌ redirige a /dashboard |
+| Dashboard, calculadora, listas de compras | ❌ → login | ✅ | ✅ |
+| Ver planes | ❌ | Solo los suyos | Todos |
+| Crear plan | ❌ | ✅ | ✅ |
+| Editar / eliminar plan | ❌ | Solo los suyos (403 si no) | Todos |
+| /admin/usuarios | ❌ → login | ❌ vista 403 | ✅ |
+
+#### Regla de dueño en `/plans`
 
 - **`user`**: ve solo sus planes. `GET /plans` filtra por `ownerId` en el servidor (no en el cliente). Un plan ajeno responde 403. Al crear, el servidor pone `ownerId` desde el token. Ni `PUT` ni `PATCH` pueden cambiar `ownerId`.
 - **`admin`**: ve todos los planes. Puede editar o borrar cualquier plan, y es el único que puede llamar a `GET /users` (lo usa la vista `/admin/usuarios`).
@@ -283,6 +295,28 @@ El secreto está en `JWT_SECRET` (`.env`, no versionado) y debe tener al menos 1
 - `GET /users`, `POST/PUT/PATCH/DELETE /users` y `/db` están cerrados para clientes. `GET /users` responde 403 para un `user`; el resto devuelve 404.
 
 La regla se implementa en `plansAccess(db)` (`api/middleware.cjs`), que se ejecuta antes de json-server y solo para `/plans`.
+
+#### Directivas estructurales `*appHasRole` y `*appCanManage`
+
+Definidas en `src/app/shared/directives/has-role.directive.ts` (standalone):
+
+- **`*appHasRole`**: muestra u oculta una plantilla según el rol de la sesión actual (`authService.role()`). Acepta un rol (`'admin'`), un arreglo de roles (`['admin', 'user']`) y plantilla `else`.
+- **`*appCanManage`**: muestra u oculta una plantilla aplicando la regla de dueño (`authService.canManage(plan)`): permite la vista si el usuario es `admin` o si `plan.ownerId === currentUser().id`. También acepta `else`.
+
+```html
+<!-- Solo visible para administradores -->
+<a *appHasRole="'admin'" routerLink="/admin/usuarios">Usuarios</a>
+
+<!-- Con plantilla alternativa cuando no se cumple el rol -->
+<section *appHasRole="'admin'; else sinPermiso">Panel de administración</section>
+<ng-template #sinPermiso><p>No tienes permisos de administrador.</p></ng-template>
+
+<!-- Botones de edición y borrado según la regla de dueño o rol admin -->
+<a *appCanManage="plan" [routerLink]="['/dashboard/planes', plan.id, 'editar']">Editar</a>
+<button *appCanManage="plan" type="button" (click)="requestDelete(plan)">Eliminar</button>
+```
+
+**Por qué evitan repetir `@if` en cada componente:** ambas directivas usan un `effect()` reactivo sobre las señales de `AuthService` (`role()` y `currentUser()`) junto con `ViewContainerRef` + `TemplateRef`. De este modo, toda la lógica de autorización en la interfaz queda centralizada en `AuthService` y en las directivas, sin esparcir comparaciones manuales como `@if (user.role === 'admin')` ni duplicar vistas cuando cambia la sesión (login/logout).
 
 ### 4.6 Flujo de sesión en el cliente
 
@@ -316,7 +350,23 @@ _Pendiente. Aquí se documentarán la lista, la ruta de detalle, el modal de con
 
 ### Formularios y validaciones (@LuisCacho-py)
 
-_Pendiente. Aquí se documentarán el formulario de alta, el de edición con datos precargados, el validador personalizado, el guard de salida y el envío de login y registro._
+- **Validadores personalizados y guard de salida (`C1`)**:
+  - `src/app/core/validators/plan.validators.ts`: `notBlankValidator()`, `minIngredientsValidator(min)`, `ingredientGramsRangeValidator(min, max)` y `uniquePlanNameValidator()` (evita nombres duplicados ignorando mayúsculas/espacios y permitiendo conservar el nombre original al editar).
+  - `src/app/core/guards/unsaved-changes.guard.ts`: `unsavedChangesGuard` (`CanDeactivateFn<HasUnsavedChanges>`) que impide perder cambios sin guardar al salir de `/dashboard` o `/dashboard/planes/:id/editar`.
+- **Formulario reactivo de alta y edición de planes (`C2` y `C3`)**:
+  - `PlanBuilderComponent` (`src/app/features/dashboard/components/plan-builder/`) y `PlanEditComponent` (`/dashboard/planes/:id/editar`): `FormGroup` + `FormArray` tipados, mensajes de error por campo, botón deshabilitado con spinner mientras guarda y precarga del plan existente en modo edición.
+- **Formularios de login y registro (`Entrega 3`)**:
+  - Validaciones reactivas por campo debajo de cada input cuando el control fue tocado (`touched`) o tras enviar el formulario (`submitted`): correo requerido y con formato válido, contraseña requerida con longitud mínima, nombre con mínimo de caracteres, validador de grupo `passwordsMatch` para confirmar contraseña y casilla obligatoria `acceptTerms`.
+  - Estado de carga (`authService.isLoading()`): botón deshabilitado sin doble envío con spinner y texto `"Ingresando…"` (login) / `"Creando cuenta…"` (registro).
+  - Mensajes generales claros: `401` → `"Correo o contraseña incorrectos."`; `409` en registro → `"Ese correo ya está registrado."`.
+  - Aviso de sesión expirada arriba del login (`logoutReason() === 'expired'` o `?expired` en la URL): `"Tu sesión expiró. Inicia sesión de nuevo."`.
+  - Conservación de `returnUrl` al navegar de login a `"¿No tienes cuenta? Regístrate gratis"` y redirección automática a `returnUrl` tras completar el registro.
+- **Manejo del `403 Forbidden` en el CRUD de planes (`Entrega 3`)**:
+  - Distinguido mediante `ApiError.status === 403` (`src/app/core/errors/api-error.ts`) sin duplicar el toast global del interceptor:
+  - **Eliminar (`DELETE`)**: cierra el modal de confirmación, quita el estado de carga, revierte el borrado optimista para que el plan permanezca en la lista y conserva la página actual.
+  - **Editar (`PUT` en `plan-edit`)**: sale del estado de envío, muestra el mensaje en línea `"No tienes permiso para editar este plan"`, desactiva el guard `canDeactivate` de cambios sin guardar y ofrece un botón para volver al detalle.
+  - **Favorito (`PATCH`)**: revierte la estrella a su estado anterior.
+  - **Detalle (`GET /dashboard/planes/:id` de otro usuario)**: muestra `<app-error-state>` con `"No tienes acceso a este plan"` en lugar de quedar cargando indefinidamente.
 
 ## 6. Flujo de trabajo del equipo
 
