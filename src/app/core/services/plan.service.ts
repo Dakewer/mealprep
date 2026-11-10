@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiError, toApiError } from '../errors/api-error';
 import { INGREDIENT_CATALOG } from '../data/ingredients.data';
@@ -50,18 +50,29 @@ export class PlanService {
   readonly plansLoading = computed(() => this._plansStatus() === 'loading');
 
   // ── Derivados ─────────────────────────────────────────────
+  private readonly userId = computed(() => this.auth.currentUser()?.id);
   readonly tdee = computed(() => this.nutrition.calculateTdee(this._profile()));
   readonly goals = computed(() => this.nutrition.calculateMacroGoals(this._profile()));
   readonly favoritesCount = computed(() => this._plans().filter(p => p.isFavorite).length);
 
   constructor() {
-    // Carga inicial síncrona: los componentes que se construyen enseguida ya ven los datos guardados.
-    this.load(this.auth.currentUser()?.id);
+    const initialId = this.auth.currentUser()?.id;
+    this.load(initialId);
 
-    // Recarga los datos cuando cambia el usuario (login / logout).
-    effect(() => this.load(this.auth.currentUser()?.id));
+    let lastUserId = initialId;
+    effect(() => {
+      const id = this.userId();
+      if (id === lastUserId) return;
+      lastUserId = id;
+      untracked(() => {
+        this.load(id);
+        this._plans.set([]);
+        this._plansStatus.set(id ? 'loading' : 'idle');
+        this._plansError.set(null);
+        if (id) void this.loadPlans();
+      });
+    });
 
-    // Los planes vienen de la API.
     void this.loadPlans();
   }
 
@@ -225,9 +236,9 @@ export class PlanService {
 
   private write(name: string, value: unknown): void {
     try {
-      localStorage.setItem(this.key(this.auth.currentUser()?.id, name), JSON.stringify(value));
+      localStorage.setItem(this.key(this.userId(), name), JSON.stringify(value));
     } catch {
-      /* almacenamiento lleno o bloqueado: se ignora en esta versión demo */
+      /* ... */
     }
   }
 }

@@ -1,8 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { NotificationService } from '../../../core/services/notification.service';
 import { RippleDirective } from '../../../shared/directives/ripple.directive';
 
 @Component({
@@ -13,23 +12,25 @@ import { RippleDirective } from '../../../shared/directives/ripple.directive';
   styleUrl: './login.component.css',
 })
 export class LoginComponent {
-  private fb           = inject(FormBuilder);
-  private authService  = inject(AuthService);
-  private notifService = inject(NotificationService);
-  private router       = inject(Router);
+  private fb          = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router      = inject(Router);
+  private route       = inject(ActivatedRoute);
 
-  // ── UI state ─────────────────────────────────────────────
+  // ── Estado de UI ─────────────────────────────────────────
   showPassword = signal(false);
-  isLoading    = signal(false);
 
-  // ── Form ─────────────────────────────────────────────────
+  /** Señales del servicio: el estado de carga y el error de la API se pintan en el formulario. */
+  readonly isLoading = this.authService.isLoading;
+  readonly error     = this.authService.error;
+
+  // ── Formulario ───────────────────────────────────────────
   loginForm = this.fb.group({
-    email:      ['', [Validators.required, Validators.email]],
-    password:   ['', [Validators.required, Validators.minLength(6)]],
-    rememberMe: [false],
+    email:    ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  // ── Getters ───────────────────────────────────────────────
+  // ── Getters ──────────────────────────────────────────────
   get email()    { return this.loginForm.get('email')!; }
   get password() { return this.loginForm.get('password')!; }
 
@@ -41,29 +42,26 @@ export class LoginComponent {
     this.showPassword.update(v => !v);
   }
 
-  // ── Submit ────────────────────────────────────────────────
+  // ── Submit ───────────────────────────────────────────────
   async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-      this.notifService.error('Por favor, completa todos los campos correctamente.');
       return;
     }
 
-    this.isLoading.set(true);
-
     const success = await this.authService.login({
-      email:      this.email.value!,
-      password:   this.password.value!,
-      rememberMe: this.loginForm.value.rememberMe ?? false,
+      email:    this.email.value!,
+      password: this.password.value!,
     });
 
-    this.isLoading.set(false);
-
     if (success) {
-      this.notifService.success('¡Bienvenido de vuelta! Redirigiendo al dashboard…');
-      setTimeout(() => this.router.navigate(['/dashboard']), 1200);
-    } else {
-      this.notifService.error('Credenciales incorrectas. Intenta de nuevo.');
+      await this.router.navigateByUrl(this.returnUrl());
     }
+  }
+
+  /** Ruta a la que volver tras entrar (la pone el guard o el interceptor); solo rutas internas. */
+  private returnUrl(): string {
+    const url = this.route.snapshot.queryParamMap.get('returnUrl');
+    return url && url.startsWith('/') && !url.startsWith('//') ? url : '/dashboard';
   }
 }
