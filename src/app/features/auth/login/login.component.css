@@ -5,7 +5,7 @@
 
 /* Header */
 .auth-form__header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .auth-form__title {
@@ -18,6 +18,28 @@
 .auth-form__subtitle {
   font-size: 0.9375rem;
   color: var(--text-on-light-3);
+}
+
+/* Session expired warning banner */
+.auth-form__expired-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: var(--radius-lg, 12px);
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.auth-form__api-error {
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md, 8px);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
 }
 
 /* Body */

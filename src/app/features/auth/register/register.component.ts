@@ -1,10 +1,16 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { RippleDirective } from '../../../shared/directives/ripple.directive';
 
-/** Validador personalizado: las contraseñas deben coincidir */
+/** Validador personalizado de grupo: las contraseñas deben coincidir */
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password        = control.get('password')?.value;
   const confirmPassword = control.get('confirmPassword')?.value;
@@ -22,14 +28,34 @@ export class RegisterComponent {
   private fb          = inject(FormBuilder);
   private authService = inject(AuthService);
   private router      = inject(Router);
+  private route       = inject(ActivatedRoute);
 
   // ── Estado de UI ─────────────────────────────────────────
   showPassword        = signal(false);
   showConfirmPassword = signal(false);
+  submitted           = signal(false);
 
   /** Señales del servicio: el estado de carga y el error de la API se pintan en el formulario. */
   readonly isLoading = this.authService.isLoading;
-  readonly error     = this.authService.error;
+
+  /**
+   * Normaliza el mensaje de conflicto 409 en el registro a "Ese correo ya está registrado."
+   * manteniendo intacto `AuthService.error()`.
+   */
+  readonly error = computed<string | null>(() => {
+    const raw = this.authService.error();
+    if (!raw) return null;
+    if (raw.toLowerCase().includes('ya existe')) {
+      return 'Ese correo ya está registrado.';
+    }
+    return raw;
+  });
+
+  /** Query params para conservar `returnUrl` al volver a iniciar sesión. */
+  readonly loginQueryParams = computed(() => {
+    const url = this.rawReturnUrl();
+    return url ? { returnUrl: url } : null;
+  });
 
   // ── Formulario ───────────────────────────────────────────
   registerForm = this.fb.group(
@@ -75,13 +101,13 @@ export class RegisterComponent {
   strengthColors = ['', '#ef4444', '#f59e0b', '#3b82f6', '#22c55e'];
 
   isFieldInvalid(field: AbstractControl | null): boolean {
-    return !!(field?.invalid && field.touched);
+    return !!(field?.invalid && (field.touched || this.submitted()));
   }
 
   isPasswordMismatch(): boolean {
     return !!(
       this.registerForm.hasError('passwordMismatch') &&
-      this.confirmPassword.touched
+      (this.confirmPassword.touched || this.submitted())
     );
   }
 
@@ -90,6 +116,9 @@ export class RegisterComponent {
 
   // ── Submit ───────────────────────────────────────────────
   async onSubmit(): Promise<void> {
+    if (this.isLoading()) return;
+
+    this.submitted.set(true);
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
@@ -106,7 +135,16 @@ export class RegisterComponent {
     });
 
     if (success) {
-      await this.router.navigate(['/dashboard']);
+      await this.router.navigateByUrl(this.returnUrl());
     }
+  }
+
+  private rawReturnUrl(): string | null {
+    const url = this.route.snapshot.queryParamMap.get('returnUrl');
+    return url && url.startsWith('/') && !url.startsWith('//') ? url : null;
+  }
+
+  private returnUrl(): string {
+    return this.rawReturnUrl() ?? '/dashboard';
   }
 }

@@ -34,12 +34,14 @@
           placeholder="Tu nombre"
           autocomplete="name"
           aria-required="true"
+          [attr.aria-invalid]="isFieldInvalid(name)"
         />
       </div>
       @if (isFieldInvalid(name)) {
         <p class="form-error" role="alert">
           @if (name.hasError('required'))  { El nombre es obligatorio. }
           @else if (name.hasError('minlength')) { El nombre debe tener al menos 2 caracteres. }
+          @else if (name.hasError('maxlength')) { El nombre no puede superar los 60 caracteres. }
         </p>
       }
     </div>
@@ -64,6 +66,7 @@
           placeholder="tu@correo.com"
           autocomplete="email"
           aria-required="true"
+          [attr.aria-invalid]="isFieldInvalid(email)"
         />
       </div>
       @if (isFieldInvalid(email)) {
@@ -117,6 +120,7 @@
           placeholder="Mínimo 8 caracteres"
           autocomplete="new-password"
           aria-required="true"
+          [attr.aria-invalid]="isFieldInvalid(password)"
         />
         <button type="button" class="form-input-action"
           (click)="togglePassword()"
@@ -180,6 +184,7 @@
           placeholder="Repite tu contraseña"
           autocomplete="new-password"
           aria-required="true"
+          [attr.aria-invalid]="isFieldInvalid(confirmPassword) || isPasswordMismatch()"
         />
         <button type="button" class="form-input-action"
           (click)="toggleConfirmPassword()"
@@ -198,7 +203,9 @@
           }
         </button>
       </div>
-      @if (isPasswordMismatch()) {
+      @if (isFieldInvalid(confirmPassword) && confirmPassword.hasError('required')) {
+        <p class="form-error" role="alert">Confirma tu contraseña.</p>
+      } @else if (isPasswordMismatch()) {
         <p class="form-error" role="alert">Las contraseñas no coinciden.</p>
       }
     </div>
@@ -226,7 +233,7 @@
     </div>
 
     @if (error()) {
-      <p class="form-error" role="alert">{{ error() }}</p>
+      <p class="form-error auth-form__api-error" role="alert">{{ error() }}</p>
     }
 
     <!-- Submit -->
@@ -234,6 +241,7 @@
       type="submit"
       class="btn btn--primary btn--full btn--lg auth-form__submit"
       [disabled]="isLoading()"
+      [attr.aria-busy]="isLoading()"
       appRipple
       aria-live="polite"
     >
@@ -250,7 +258,11 @@
   <footer class="auth-form__footer" style="margin-top: 1.5rem;">
     <p>
       ¿Ya tienes cuenta?
-      <a routerLink="/auth/login" class="auth-form__link">Inicia sesión</a>
+      <a
+        routerLink="/auth/login"
+        [queryParams]="loginQueryParams()"
+        class="auth-form__link"
+      >Inicia sesión</a>
     </p>
   </footer>
 </div>

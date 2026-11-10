@@ -60,11 +60,29 @@ export class AuthService {
 
   readonly isAuthenticated = computed(() => this._token() !== null);
   readonly isLoading       = computed(() => this._status() === 'loading');
+  readonly role            = computed(() => this._currentUser()?.role ?? null);
 
   constructor() {
     // Solo lectura síncrona del almacenamiento: nada de HTTP aquí (los interceptores
     // inyectan este servicio, y una petición durante su construcción sería circular).
     this.restoreStoredSession();
+  }
+
+  // ── Permisos y roles ──────────────────────────────────────
+
+  /** Devuelve `true` si el usuario autenticado tiene alguno de los roles indicados. */
+  hasRole(...roles: UserRole[]): boolean {
+    const currentRole = this.role();
+    return currentRole !== null && roles.includes(currentRole);
+  }
+
+  /** Devuelve `true` si el usuario es `admin` o es dueño del plan (`plan.ownerId === currentUser().id`). */
+  canManage(plan: { ownerId?: string } | null | undefined): boolean {
+    if (!plan) return false;
+    const user = this._currentUser();
+    if (!user) return false;
+    if (this.role() === 'admin') return true;
+    return Boolean(plan.ownerId && plan.ownerId === user.id);
   }
 
   // ── Acciones ──────────────────────────────────────────────

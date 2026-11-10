@@ -7,6 +7,18 @@
     </p>
   </header>
 
+  @if (sessionExpiredMessage(); as expiredMsg) {
+    <div class="auth-form__expired-banner" role="status" aria-live="polite">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ expiredMsg }}</span>
+    </div>
+  }
+
   <!-- Form -->
   <form
     [formGroup]="loginForm"
@@ -35,6 +47,7 @@
           placeholder="tu@correo.com"
           autocomplete="email"
           aria-required="true"
+          [attr.aria-invalid]="isFieldInvalid(email)"
           [attr.aria-describedby]="isFieldInvalid(email) ? 'email-error' : null"
         />
       </div>
@@ -75,6 +88,7 @@
           placeholder="Mínimo 6 caracteres"
           autocomplete="current-password"
           aria-required="true"
+          [attr.aria-invalid]="isFieldInvalid(password)"
           [attr.aria-describedby]="isFieldInvalid(password) ? 'pw-error' : null"
         />
         <button
@@ -113,7 +127,7 @@
     </div>
 
     @if (error()) {
-      <p class="form-error" role="alert">{{ error() }}</p>
+      <p class="form-error auth-form__api-error" role="alert">{{ error() }}</p>
     }
 
     <!-- Submit -->
@@ -121,12 +135,13 @@
       type="submit"
       class="btn btn--primary btn--full btn--lg auth-form__submit"
       [disabled]="isLoading()"
+      [attr.aria-busy]="isLoading()"
       appRipple
       aria-live="polite"
     >
       @if (isLoading()) {
         <span class="auth-form__spinner" aria-hidden="true"></span>
-        Iniciando sesión…
+        Ingresando…
       } @else {
         Iniciar sesión
       }
@@ -142,7 +157,11 @@
   <footer class="auth-form__footer">
     <p>
       ¿No tienes cuenta?
-      <a routerLink="/auth/register" class="auth-form__link">Regístrate gratis</a>
+      <a
+        routerLink="/auth/register"
+        [queryParams]="registerQueryParams()"
+        class="auth-form__link"
+      >Regístrate gratis</a>
     </p>
   </footer>
 </div>
