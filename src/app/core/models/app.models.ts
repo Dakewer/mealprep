@@ -1,9 +1,19 @@
 // ── User & Auth Models ────────────────────────────────────────
+export type UserRole = 'admin' | 'user';
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  role?: UserRole;
   avatarInitials?: string;
+  createdAt?: string;
+}
+
+/** Respuesta de `POST /auth/login` y `POST /auth/register`. */
+export interface AuthResponse {
+  token: string;
+  user: User;
 }
 
 export interface LoginCredentials {
@@ -38,10 +48,12 @@ export interface NutritionPlan {
   createdAt: string; // ISO 8601, lo define el cliente al crear el plan
   isFavorite: boolean;
   tags: string[];
+  /** Id del usuario dueño del plan. Lo fija el servidor al crear; el cliente no lo envía. */
+  ownerId?: string;
 }
 
-/** Cuerpo que se envía a la API para crear (POST) o reemplazar (PUT) un plan. El `id` lo asigna el servidor. */
-export type PlanPayload = Omit<NutritionPlan, 'id'>;
+/** Cuerpo que se envía a la API para crear (POST) o reemplazar (PUT) un plan. `id` y `ownerId` los asigna el servidor. */
+export type PlanPayload = Omit<NutritionPlan, 'id' | 'ownerId'>;
 
 /** Página de resultados de un listado paginado. */
 export interface Page<T> {

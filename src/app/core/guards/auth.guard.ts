@@ -1,33 +1,41 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { AuthService, SESSION_EXPIRED_MESSAGE } from '../services/auth.service';
+import { NotificationService } from '../services/notification.service';
 
 /**
  * Protege rutas privadas (dashboard, perfil, etc.)
- * Redirige al login si el usuario no está autenticado.
+ * Revisa que el token exista y no haya vencido; si no, manda al login
+ * con `returnUrl` para volver a la ruta pedida después de entrar.
  */
-export const authGuard: CanActivateFn = () => {
-  const auth   = inject(AuthService);
-  const router = inject(Router);
+export const authGuard: CanActivateFn = (_route, state) => {
+  const auth          = inject(AuthService);
+  const router        = inject(Router);
+  const notifications = inject(NotificationService);
 
-  if (auth.isAuthenticated()) {
+  const session = auth.checkSession();
+  if (session === 'valid') {
     return true;
   }
 
+  if (session === 'expired') {
+    notifications.warning(SESSION_EXPIRED_MESSAGE, 'Sesión expirada');
+  }
+
   return router.createUrlTree(['/auth/login'], {
-    queryParams: { returnUrl: router.url },
+    queryParams: { returnUrl: state.url },
   });
 };
 
 /**
  * Protege rutas públicas de auth (login, registro).
- * Redirige al dashboard si el usuario ya está autenticado.
+ * Redirige al dashboard si el usuario ya tiene una sesión válida.
  */
 export const publicGuard: CanActivateFn = () => {
   const auth   = inject(AuthService);
   const router = inject(Router);
 
-  if (!auth.isAuthenticated()) {
+  if (auth.checkSession() !== 'valid') {
     return true;
   }
 
