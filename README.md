@@ -388,11 +388,12 @@ src/app/core/
   config/                 token API_BASE_URL
   data/                   catálogo de ingredientes
   errors/                 ApiError y toApiError
-  guards/                 authGuard, publicGuard
+  guards/                 authGuard, guestGuard, roleGuard y unsavedChangesGuard
   interceptors/           authInterceptor y httpErrorInterceptor
   models/                 interfaces tipadas
-  services/               Auth, Notification, Nutrition, Plan y PlansApi
+  services/               Auth, Notification, Nutrition, Plan, PlansApi y UsersApi
   testing/                fake-jwt.ts (helper de pruebas)
+  validators/             validadores personalizados de planes
 src/app/features/         landing, páginas públicas, auth y dashboard
 src/app/shared/           toast, barras de macros y directiva ripple
 ```

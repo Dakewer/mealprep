@@ -1,26 +1,6 @@
 <div class="dashboard">
-  <!-- Topbar -->
-  <header class="dash-topbar">
-    <a routerLink="/" class="dash-logo">
-      <span aria-hidden="true">🥗</span>
-      <span>Deficcitto</span>
-    </a>
-    <div class="dash-topbar__right">
-      <a *appHasRole="'admin'" routerLink="/admin/usuarios" class="btn btn--outline btn--sm" appRipple>
-        Usuarios
-      </a>
-      <span class="dash-user">
-        <span class="dash-user__avatar" aria-hidden="true">{{ authService.currentUser()?.avatarInitials }}</span>
-        <span class="dash-user__name">{{ authService.currentUser()?.name }}</span>
-      </span>
-      <button type="button" class="btn btn--ghost-dark btn--sm" (click)="logout()" appRipple>
-        Cerrar sesión
-      </button>
-    </div>
-  </header>
-
   <main class="dash-main">
-    <h1 class="dash-title">¡Hola, {{ authService.currentUser()?.name }}! 👋</h1>
+    <h1 class="dash-title">¡Hola, {{ authService.currentUser()?.name }}!</h1>
 
     <!-- Tabs -->
     <div class="dash-tabs" role="tablist" aria-label="Secciones del dashboard">

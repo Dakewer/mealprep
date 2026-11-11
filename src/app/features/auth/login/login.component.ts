@@ -80,6 +80,7 @@ export class LoginComponent {
     if (success) {
       await this.router.navigateByUrl(this.returnUrl());
     }
+    // Si falla la petición HTTP, el interceptor global ya mostró el toast de error
   }
 
   /** Ruta interna de `returnUrl` si es válida, o `null`. */

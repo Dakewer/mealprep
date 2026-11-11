@@ -137,6 +137,7 @@ export class RegisterComponent {
     if (success) {
       await this.router.navigateByUrl(this.returnUrl());
     }
+    // Si falla la petición HTTP, el interceptor global ya mostró el toast de error
   }
 
   private rawReturnUrl(): string | null {
