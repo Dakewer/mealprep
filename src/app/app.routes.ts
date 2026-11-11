@@ -86,6 +86,7 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [authGuard],
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./layouts/private-layout/private-layout.component').then(
         m => m.PrivateLayoutComponent

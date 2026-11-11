@@ -71,4 +71,34 @@ describe('PlanEditComponent (C3)', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Plan no encontrado');
   });
+
+  it('con 403 al guardar (PUT), muestra mensaje en línea, desactiva canDeactivate y ofrece volver al detalle', async () => {
+    http.expectOne(r => r.url === `${BASE}/plans`).flush([samplePlan('plan-001')]);
+    await Promise.resolve();
+
+    fixture.componentRef.setInput('id', 'plan-001');
+    fixture.detectChanges();
+
+    const builder = component.builder()!;
+    builder.nameControl.setValue('Intento de edición sin permiso');
+    builder.nameControl.markAsDirty();
+    builder.planForm.markAsDirty();
+    expect(component.hasUnsavedChanges()).toBe(true);
+
+    const savePromise = builder.save();
+    http
+      .expectOne(`${BASE}/plans/plan-001`)
+      .flush({ message: 'Este plan pertenece a otro usuario.' }, { status: 403, statusText: 'Forbidden' });
+
+    await savePromise;
+    fixture.detectChanges();
+
+    expect(builder.isSaving()).toBe(false);
+    expect(builder.forbiddenError()).toBe('No tienes permiso para editar este plan');
+    expect(component.hasUnsavedChanges()).toBe(false);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('No tienes permiso para editar este plan');
+    expect(text).toContain('Volver al detalle');
+  });
 });

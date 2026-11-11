@@ -3,206 +3,246 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config/api-base-url.token';
 import { toApiError } from '../errors/api-error';
-import { LoginCredentials, RegisterData, User } from '../models/app.models';
+import { AuthResponse, LoginCredentials, RegisterData, User, UserRole } from '../models/app.models';
 
 export type AuthStatus = 'idle' | 'loading' | 'success' | 'error';
+export type LogoutReason = 'manual' | 'expired';
+export type SessionCheck = 'valid' | 'missing' | 'expired';
 
-interface ApiUserResponse {
-  id?: string | number;
-  name?: string;
-  email?: string;
+/** Dónde se guarda la sesión. El token es la fuente de verdad; el usuario es solo una copia para pintar rápido. */
+export const TOKEN_KEY = 'deficcitto_token';
+export const USER_KEY = 'deficcitto_user';
+
+export const SESSION_EXPIRED_MESSAGE = 'Tu sesión expiró. Inicia sesión de nuevo.';
+const INVALID_CREDENTIALS_MESSAGE = 'Correo o contraseña incorrectos.';
+
+/** Datos que firma la API dentro del JWT. */
+interface JwtPayload {
+  sub: string;
+  role?: UserRole;
+  exp: number; // segundos desde 1970
 }
+
+/** Lee el cuerpo del JWT (sin verificar la firma: eso solo puede hacerlo el servidor). */
+function decodeJwt(token: string | null): JwtPayload | null {
+  if (!token) return null;
+  try {
+    const part = token.split('.')[1];
+    const base64 = part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '=');
+    const json = new TextDecoder().decode(Uint8Array.from(atob(base64), c => c.charCodeAt(0)));
+    const data = JSON.parse(json) as Partial<JwtPayload>;
+    return typeof data.sub === 'string' && typeof data.exp === 'number' ? (data as JwtPayload) : null;
+  } catch {
+    return null;
+  }
+}
+
+const isExpired = (payload: JwtPayload): boolean => payload.exp * 1000 <= Date.now();
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http    = inject(HttpClient, { optional: true });
-  private baseUrl = inject(API_BASE_URL, { optional: true }) ?? 'http://localhost:3000';
+  private http    = inject(HttpClient);
+  private baseUrl = inject(API_BASE_URL);
 
-  // ── Private state ─────────────────────────────────────────
-  private _isAuthenticated = signal<boolean>(false);
-  private _currentUser     = signal<User | null>(null);
-  private _status          = signal<AuthStatus>('idle');
-  private _error           = signal<string | null>(null);
+  // ── Estado privado ────────────────────────────────────────
+  private _token        = signal<string | null>(null);
+  private _currentUser  = signal<User | null>(null);
+  private _status       = signal<AuthStatus>('idle');
+  private _error        = signal<string | null>(null);
+  private _logoutReason = signal<LogoutReason | null>(null);
 
-  // ── Public readonly signals ───────────────────────────────
-  readonly isAuthenticated = this._isAuthenticated.asReadonly();
-  readonly currentUser     = this._currentUser.asReadonly();
-  readonly status          = this._status.asReadonly();
-  readonly error           = this._error.asReadonly();
+  // ── Señales públicas de solo lectura ──────────────────────
+  readonly token        = this._token.asReadonly();
+  readonly currentUser  = this._currentUser.asReadonly();
+  readonly status       = this._status.asReadonly();
+  readonly error        = this._error.asReadonly();
+  readonly logoutReason = this._logoutReason.asReadonly();
 
-  readonly isLoading = computed(() => this._status() === 'loading');
-
-  private get usersUrl(): string {
-    return `${this.baseUrl}/users`;
-  }
+  readonly isAuthenticated = computed(() => this._token() !== null);
+  readonly isLoading       = computed(() => this._status() === 'loading');
+  readonly role            = computed(() => this._currentUser()?.role ?? null);
 
   constructor() {
-    this.checkStoredSession();
+    // Solo lectura síncrona del almacenamiento: nada de HTTP aquí (los interceptores
+    // inyectan este servicio, y una petición durante su construcción sería circular).
+    this.restoreStoredSession();
   }
 
-  // ── Auth actions (C4: envío a la API sin manejar token ni sesión en servidor) ──
+  // ── Permisos y roles ──────────────────────────────────────
 
-  /**
-   * Envía los datos del formulario de inicio de sesión a `POST /users` en la API.
-   * No gestiona tokens ni sesiones de servidor (como permite la entrega); solo
-   * conserva el estado local de interfaz para la navegación del cliente.
-   */
+  /** Devuelve `true` si el usuario autenticado tiene alguno de los roles indicados. */
+  hasRole(...roles: UserRole[]): boolean {
+    const currentRole = this.role();
+    return currentRole !== null && roles.includes(currentRole);
+  }
+
+  /** Devuelve `true` si el usuario es `admin` o es dueño del plan (`plan.ownerId === currentUser().id`). */
+  canManage(plan: { ownerId?: string } | null | undefined): boolean {
+    if (!plan) return false;
+    const user = this._currentUser();
+    if (!user) return false;
+    if (this.role() === 'admin') return true;
+    return Boolean(plan.ownerId && plan.ownerId === user.id);
+  }
+
+  // ── Acciones ──────────────────────────────────────────────
+
+  /** Inicia sesión con `POST /auth/login`. Devuelve `true` si quedó autenticado. */
   async login(credentials: LoginCredentials): Promise<boolean> {
-    this._status.set('loading');
-    this._error.set(null);
-
     const email = credentials.email?.trim() ?? '';
     const password = credentials.password ?? '';
 
     if (!email || !password) {
-      this._status.set('error');
-      this._error.set('Por favor, completa todos los campos.');
-      return false;
+      return this.fail('Por favor, completa todos los campos.');
     }
-
-    try {
-      const payload = {
-        email,
-        password,
-        rememberMe: credentials.rememberMe ?? false,
-        action: 'login' as const,
-        submittedAt: new Date().toISOString(),
-      };
-
-      const res = this.http
-        ? await firstValueFrom(this.http.post<ApiUserResponse>(this.usersUrl, payload))
-        : { id: email.includes('admin') ? 'admin-001' : 'user-001', email };
-
-      const displayName = res?.name?.trim() || this.getNameFromEmail(email);
-      const user: User = {
-        id: res?.id !== undefined ? String(res.id) : (email.toLowerCase().includes('admin') ? 'admin-001' : 'user-001'),
-        name: displayName,
-        email,
-        role: email.toLowerCase().includes('admin') ? 'admin' : 'user',
-        avatarInitials: this.getInitials(displayName),
-      };
-
-      this._currentUser.set(user);
-      this._isAuthenticated.set(true);
-      this._status.set('success');
-
-      if (credentials.rememberMe) {
-        localStorage.setItem('deficcitto_user', JSON.stringify(user));
-      } else {
-        sessionStorage.setItem('deficcitto_user', JSON.stringify(user));
-      }
-
-      return true;
-    } catch (error) {
-      const apiErr = toApiError(error);
-      this._status.set('error');
-      this._error.set(apiErr.message);
-      return false;
-    }
+    return this.authenticate('/auth/login', { email, password });
   }
 
-  /**
-   * Envía los datos del formulario de registro a `POST /users` en la API.
-   */
+  /** Crea la cuenta con `POST /auth/register` y deja la sesión iniciada. */
   async register(data: RegisterData): Promise<boolean> {
-    this._status.set('loading');
-    this._error.set(null);
-
     const name = data.name?.trim() ?? '';
     const email = data.email?.trim() ?? '';
     const password = data.password ?? '';
 
     if (!name || !email || !password) {
-      this._status.set('error');
-      this._error.set('Por favor, completa todos los campos.');
-      return false;
+      return this.fail('Por favor, completa todos los campos.');
     }
-
     if (password !== data.confirmPassword) {
-      this._status.set('error');
-      this._error.set('Las contraseñas no coinciden.');
-      return false;
+      return this.fail('Las contraseñas no coinciden.');
     }
-
-    try {
-      const payload = {
-        name,
-        email,
-        password,
-        objective: data.objective,
-        acceptTerms: data.acceptTerms,
-        action: 'register' as const,
-        createdAt: new Date().toISOString(),
-      };
-
-      const res = this.http
-        ? await firstValueFrom(this.http.post<ApiUserResponse>(this.usersUrl, payload))
-        : { id: `user-${Date.now()}`, name, email };
-
-      const user: User = {
-        id: res?.id !== undefined ? String(res.id) : `user-${Date.now()}`,
-        name: res?.name?.trim() || name,
-        email: res?.email?.trim() || email,
-        role: 'user',
-        avatarInitials: this.getInitials(name),
-      };
-
-      this._currentUser.set(user);
-      this._isAuthenticated.set(true);
-      this._status.set('success');
-
-      sessionStorage.setItem('deficcitto_user', JSON.stringify(user));
-      return true;
-    } catch (error) {
-      const apiErr = toApiError(error);
-      this._status.set('error');
-      this._error.set(apiErr.message);
-      return false;
-    }
+    return this.authenticate('/auth/register', { name, email, password });
   }
 
   /**
-   * Cierra la sesión activa en la interfaz.
+   * Cierra la sesión y limpia todo: token, usuario guardado y estado.
+   * `reason = 'expired'` lo usa el interceptor cuando la API responde 401.
    */
-  logout(): void {
-    this._isAuthenticated.set(false);
+  logout(reason: LogoutReason = 'manual'): void {
+    this._token.set(null);
     this._currentUser.set(null);
     this._status.set('idle');
     this._error.set(null);
-    localStorage.removeItem('deficcitto_token');
-    localStorage.removeItem('deficcitto_user');
-    sessionStorage.removeItem('deficcitto_token');
-    sessionStorage.removeItem('deficcitto_user');
+    this._logoutReason.set(reason);
+    this.clearStorage();
   }
 
-  // ── Private helpers ───────────────────────────────────────
+  /**
+   * Revisa `exp` del token. Si ya venció, cierra la sesión.
+   * Lo usan los guards antes de dejar pasar a una ruta.
+   */
+  checkSession(): SessionCheck {
+    const token = this._token();
+    if (!token) return 'missing';
 
-  private checkStoredSession(): void {
-    const rawUser =
-      localStorage.getItem('deficcitto_user') ||
-      sessionStorage.getItem('deficcitto_user');
+    const payload = decodeJwt(token);
+    if (!payload || isExpired(payload)) {
+      this.logout('expired');
+      return 'expired';
+    }
+    return 'valid';
+  }
 
-    if (rawUser) {
-      try {
-        const user: User = JSON.parse(rawUser);
+  /**
+   * Al arrancar la app: si hay una sesión válida, pide `GET /auth/me` para refrescar al usuario.
+   * Nunca lanza: si el token no sirve (401) el interceptor cierra la sesión;
+   * si no hay conexión se conserva la sesión local.
+   */
+  async restoreSession(): Promise<void> {
+    if (this.checkSession() !== 'valid') return;
+
+    const token = this._token();
+    try {
+      const user = await firstValueFrom(this.http.get<User>(`${this.baseUrl}/auth/me`));
+      if (this._token() === token) {
         this._currentUser.set(user);
-        this._isAuthenticated.set(true);
-      } catch {
-        this.logout();
+        this.write(USER_KEY, JSON.stringify(user));
       }
+    } catch {
+      /* ver comentario del método */
     }
   }
 
-  private getInitials(name: string): string {
-    return name
-      .split(' ')
-      .slice(0, 2)
-      .map(n => n.charAt(0).toUpperCase())
-      .join('');
+  // ── Privado ───────────────────────────────────────────────
+
+  private async authenticate(path: string, body: object): Promise<boolean> {
+    this._status.set('loading');
+    this._error.set(null);
+
+    try {
+      const res = await firstValueFrom(this.http.post<AuthResponse>(`${this.baseUrl}${path}`, body));
+      this.startSession(res);
+      this._status.set('success');
+      return true;
+    } catch (error) {
+      const apiError = toApiError(error);
+      return this.fail(apiError.status === 401 ? INVALID_CREDENTIALS_MESSAGE : apiError.message);
+    }
   }
 
-  private getNameFromEmail(email: string): string {
-    const local = email.split('@')[0];
-    return local.charAt(0).toUpperCase() + local.slice(1);
+  private startSession({ token, user }: AuthResponse): void {
+    this._token.set(token);
+    this._currentUser.set(user);
+    this._logoutReason.set(null);
+    this.write(TOKEN_KEY, token);
+    this.write(USER_KEY, JSON.stringify(user));
+  }
+
+  private fail(message: string): false {
+    this._status.set('error');
+    this._error.set(message);
+    return false;
+  }
+
+  /** Recupera la sesión guardada al recargar la página. Un token vencido o dañado se descarta. */
+  private restoreStoredSession(): void {
+    const token = this.read(TOKEN_KEY);
+    if (!token) return;
+
+    const payload = decodeJwt(token);
+    if (!payload || isExpired(payload)) {
+      this.clearStorage();
+      this._logoutReason.set('expired');
+      return;
+    }
+
+    this._token.set(token);
+    this._currentUser.set(this.readStoredUser(payload.sub));
+  }
+
+  private readStoredUser(expectedId: string): User | null {
+    try {
+      const user = JSON.parse(this.read(USER_KEY) ?? 'null') as User | null;
+      return user?.id === expectedId ? user : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private clearStorage(): void {
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      // claves de la versión demo anterior, que guardaba la sesión en sessionStorage
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
+    } catch {
+      /* almacenamiento bloqueado: no hay nada que limpiar */
+    }
+  }
+
+  private read(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private write(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* almacenamiento lleno o bloqueado: la sesión vive solo en memoria */
+    }
   }
 }

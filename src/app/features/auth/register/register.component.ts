@@ -6,12 +6,11 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { NotificationService } from '../../../core/services/notification.service';
 import { RippleDirective } from '../../../shared/directives/ripple.directive';
 
-/** Validador personalizado: las contraseñas deben coincidir */
+/** Validador personalizado de grupo: las contraseñas deben coincidir */
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password        = control.get('password')?.value;
   const confirmPassword = control.get('confirmPassword')?.value;
@@ -26,17 +25,39 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
   styleUrl: './register.component.css',
 })
 export class RegisterComponent {
-  private fb           = inject(FormBuilder);
-  private authService  = inject(AuthService);
-  private notifService = inject(NotificationService);
-  private router       = inject(Router);
+  private fb          = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router      = inject(Router);
+  private route       = inject(ActivatedRoute);
 
-  // ── UI state ─────────────────────────────────────────────
+  // ── Estado de UI ─────────────────────────────────────────
   showPassword        = signal(false);
   showConfirmPassword = signal(false);
-  isLoading           = signal(false);
+  submitted           = signal(false);
 
-  // ── Form ─────────────────────────────────────────────────
+  /** Señales del servicio: el estado de carga y el error de la API se pintan en el formulario. */
+  readonly isLoading = this.authService.isLoading;
+
+  /**
+   * Normaliza el mensaje de conflicto 409 en el registro a "Ese correo ya está registrado."
+   * manteniendo intacto `AuthService.error()`.
+   */
+  readonly error = computed<string | null>(() => {
+    const raw = this.authService.error();
+    if (!raw) return null;
+    if (raw.toLowerCase().includes('ya existe')) {
+      return 'Ese correo ya está registrado.';
+    }
+    return raw;
+  });
+
+  /** Query params para conservar `returnUrl` al volver a iniciar sesión. */
+  readonly loginQueryParams = computed(() => {
+    const url = this.rawReturnUrl();
+    return url ? { returnUrl: url } : null;
+  });
+
+  // ── Formulario ───────────────────────────────────────────
   registerForm = this.fb.group(
     {
       name: ['', [
@@ -57,7 +78,7 @@ export class RegisterComponent {
     { validators: passwordMatchValidator }
   );
 
-  // ── Getters ───────────────────────────────────────────────
+  // ── Getters ──────────────────────────────────────────────
   get name()            { return this.registerForm.get('name')!; }
   get email()           { return this.registerForm.get('email')!; }
   get password()        { return this.registerForm.get('password')!; }
@@ -80,28 +101,28 @@ export class RegisterComponent {
   strengthColors = ['', '#ef4444', '#f59e0b', '#3b82f6', '#22c55e'];
 
   isFieldInvalid(field: AbstractControl | null): boolean {
-    return !!(field?.invalid && field.touched);
+    return !!(field?.invalid && (field.touched || this.submitted()));
   }
 
   isPasswordMismatch(): boolean {
     return !!(
       this.registerForm.hasError('passwordMismatch') &&
-      this.confirmPassword.touched
+      (this.confirmPassword.touched || this.submitted())
     );
   }
 
   togglePassword():        void { this.showPassword.update(v => !v); }
   toggleConfirmPassword(): void { this.showConfirmPassword.update(v => !v); }
 
-  // ── Submit (C4: envía datos a la API por medio de AuthService) ──
+  // ── Submit ───────────────────────────────────────────────
   async onSubmit(): Promise<void> {
+    if (this.isLoading()) return;
+
+    this.submitted.set(true);
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
-      this.notifService.warning('Completa todos los campos correctamente antes de continuar.');
       return;
     }
-
-    this.isLoading.set(true);
 
     const val = this.registerForm.value;
     const success = await this.authService.register({
@@ -113,12 +134,18 @@ export class RegisterComponent {
       acceptTerms:     val.acceptTerms!,
     });
 
-    this.isLoading.set(false);
-
     if (success) {
-      this.notifService.success('¡Cuenta creada! Bienvenido a Deficcitto 🎉');
-      setTimeout(() => this.router.navigate(['/dashboard']), 800);
+      await this.router.navigateByUrl(this.returnUrl());
     }
     // Si falla la petición HTTP, el interceptor global ya mostró el toast de error
+  }
+
+  private rawReturnUrl(): string | null {
+    const url = this.route.snapshot.queryParamMap.get('returnUrl');
+    return url && url.startsWith('/') && !url.startsWith('//') ? url : null;
+  }
+
+  private returnUrl(): string {
+    return this.rawReturnUrl() ?? '/dashboard';
   }
 }

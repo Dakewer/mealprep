@@ -58,6 +58,8 @@ export class PlanBuilderComponent implements HasUnsavedChanges {
   readonly isEditMode = computed(() => this.initialPlan() !== null);
   readonly isSaving   = signal(false);
   readonly submitted  = signal(false);
+  /** Mensaje en línea cuando la API rechaza la edición con 403 Forbidden. */
+  readonly forbiddenError = signal<string | null>(null);
 
   /** Espejo reactivo de los ingredientes actuales para calcular totales y catálogo disponible. */
   readonly items = signal<PlanItem[]>([]);
@@ -246,13 +248,17 @@ export class PlanBuilderComponent implements HasUnsavedChanges {
     const editingPlan = this.initialPlan();
 
     this.isSaving.set(true);
+    this.forbiddenError.set(null);
     try {
       const savedPlan = editingPlan
         ? await this.plans.updatePlan(editingPlan.id, name, currentItems, description)
         : await this.plans.savePlan(name, currentItems, description);
 
       if (!savedPlan) {
-        // La API falló: el interceptor global ya mostró el toast y conservamos los datos escritos
+        if (editingPlan && this.plans.plansError()?.status === 403) {
+          this.forbiddenError.set('No tienes permiso para editar este plan');
+          this.planForm.markAsPristine();
+        }
         return;
       }
 
@@ -281,6 +287,9 @@ export class PlanBuilderComponent implements HasUnsavedChanges {
 
   // ── HasUnsavedChanges (C1) ────────────────────────────────
   hasUnsavedChanges(): boolean {
+    if (this.forbiddenError() !== null) {
+      return false;
+    }
     return this.planForm.dirty && !this.isSaving();
   }
 
@@ -290,6 +299,7 @@ export class PlanBuilderComponent implements HasUnsavedChanges {
     this.planForm.markAsPristine();
     this.planForm.markAsUntouched();
     this.submitted.set(false);
+    this.forbiddenError.set(null);
     this.syncItemsSignal();
   }
 
@@ -305,6 +315,7 @@ export class PlanBuilderComponent implements HasUnsavedChanges {
     this.planForm.markAsPristine();
     this.planForm.markAsUntouched();
     this.submitted.set(false);
+    this.forbiddenError.set(null);
     this.syncItemsSignal();
   }
 

@@ -1,8 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
-import { NotificationService } from '../../../core/services/notification.service';
+import { Component, computed, inject, signal } from '@angular/core';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService, SESSION_EXPIRED_MESSAGE } from '../../../core/services/auth.service';
 import { RippleDirective } from '../../../shared/directives/ripple.directive';
 
 @Component({
@@ -13,56 +12,85 @@ import { RippleDirective } from '../../../shared/directives/ripple.directive';
   styleUrl: './login.component.css',
 })
 export class LoginComponent {
-  private fb           = inject(FormBuilder);
-  private authService  = inject(AuthService);
-  private notifService = inject(NotificationService);
-  private router       = inject(Router);
+  private fb          = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router      = inject(Router);
+  private route       = inject(ActivatedRoute);
 
-  // ── UI state ─────────────────────────────────────────────
+  // ── Estado de UI ─────────────────────────────────────────
   showPassword = signal(false);
-  isLoading    = signal(false);
+  submitted    = signal(false);
 
-  // ── Form ─────────────────────────────────────────────────
-  loginForm = this.fb.group({
-    email:      ['', [Validators.required, Validators.email]],
-    password:   ['', [Validators.required, Validators.minLength(6)]],
-    rememberMe: [false],
+  /** Señales del servicio: el estado de carga y el error de la API se pintan en el formulario. */
+  readonly isLoading = this.authService.isLoading;
+  readonly error     = this.authService.error;
+
+  /** Aviso cuando la sesión previa expiró (`logoutReason() === 'expired'` o query `?expired`). */
+  readonly sessionExpiredMessage = computed<string | null>(() => {
+    const queryMap = this.route.snapshot.queryParamMap;
+    const expiredParam = queryMap.get('expired');
+    const hasExpiredQuery =
+      queryMap.has('expired') && expiredParam !== 'false' && expiredParam !== '0';
+
+    if (this.authService.logoutReason() === 'expired' || hasExpiredQuery) {
+      return SESSION_EXPIRED_MESSAGE;
+    }
+    return null;
   });
 
-  // ── Getters ───────────────────────────────────────────────
+  /** Query params para conservar `returnUrl` al navegar al registro. */
+  readonly registerQueryParams = computed(() => {
+    const url = this.rawReturnUrl();
+    return url ? { returnUrl: url } : null;
+  });
+
+  // ── Formulario ───────────────────────────────────────────
+  loginForm = this.fb.group({
+    email:    ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+  });
+
+  // ── Getters ──────────────────────────────────────────────
   get email()    { return this.loginForm.get('email')!; }
   get password() { return this.loginForm.get('password')!; }
 
-  isFieldInvalid(field: ReturnType<typeof this.loginForm.get>): boolean {
-    return !!(field?.invalid && field.touched);
+  isFieldInvalid(field: AbstractControl | null): boolean {
+    return !!(field?.invalid && (field.touched || this.submitted()));
   }
 
   togglePassword(): void {
     this.showPassword.update(v => !v);
   }
 
-  // ── Submit (C4: envía datos a la API por medio de AuthService) ──
+  // ── Submit ───────────────────────────────────────────────
   async onSubmit(): Promise<void> {
+    if (this.isLoading()) return;
+
+    this.submitted.set(true);
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-      this.notifService.error('Por favor, completa todos los campos correctamente.');
       return;
     }
 
-    this.isLoading.set(true);
-
     const success = await this.authService.login({
-      email:      this.email.value!,
-      password:   this.password.value!,
-      rememberMe: this.loginForm.value.rememberMe ?? false,
+      email:    this.email.value!,
+      password: this.password.value!,
     });
 
-    this.isLoading.set(false);
-
     if (success) {
-      this.notifService.success('¡Bienvenido de vuelta! Redirigiendo al dashboard…');
-      setTimeout(() => this.router.navigate(['/dashboard']), 800);
+      await this.router.navigateByUrl(this.returnUrl());
     }
     // Si falla la petición HTTP, el interceptor global ya mostró el toast de error
+  }
+
+  /** Ruta interna de `returnUrl` si es válida, o `null`. */
+  private rawReturnUrl(): string | null {
+    const url = this.route.snapshot.queryParamMap.get('returnUrl');
+    return url && url.startsWith('/') && !url.startsWith('//') ? url : null;
+  }
+
+  /** Ruta a la que volver tras entrar (la pone el guard o el interceptor); solo rutas internas. */
+  private returnUrl(): string {
+    return this.rawReturnUrl() ?? '/dashboard';
   }
 }
