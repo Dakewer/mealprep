@@ -71,13 +71,14 @@ export class AuthService {
 
       const res = this.http
         ? await firstValueFrom(this.http.post<ApiUserResponse>(this.usersUrl, payload))
-        : { id: 'user-001', email };
+        : { id: email.includes('admin') ? 'admin-001' : 'user-001', email };
 
       const displayName = res?.name?.trim() || this.getNameFromEmail(email);
       const user: User = {
-        id: res?.id !== undefined ? String(res.id) : 'user-001',
+        id: res?.id !== undefined ? String(res.id) : (email.toLowerCase().includes('admin') ? 'admin-001' : 'user-001'),
         name: displayName,
         email,
+        role: email.toLowerCase().includes('admin') ? 'admin' : 'user',
         avatarInitials: this.getInitials(displayName),
       };
 
@@ -142,6 +143,7 @@ export class AuthService {
         id: res?.id !== undefined ? String(res.id) : `user-${Date.now()}`,
         name: res?.name?.trim() || name,
         email: res?.email?.trim() || email,
+        role: 'user',
         avatarInitials: this.getInitials(name),
       };
 

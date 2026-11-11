@@ -1,5 +1,5 @@
 import { Component, HostListener, inject, signal, viewChild } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   HasUnsavedChanges,
   UNSAVED_CHANGES_MESSAGE,
@@ -19,7 +19,7 @@ export type DashboardTab = 'resumen' | 'crear' | 'planes' | 'compras';
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    RouterLink, RippleDirective,
+    RippleDirective,
     TdeeCalculatorComponent, PlanBuilderComponent, PlanListComponent, ShoppingListComponent,
   ],
   templateUrl: './dashboard.component.html',

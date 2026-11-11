@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, publicGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, roleGuard } from './core/guards/auth.guard';
 import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
 export const routes: Routes = [
@@ -49,14 +49,14 @@ export const routes: Routes = [
     ],
   },
 
-  // ── Auth routes (split-screen layout) ───────────────────
+  // ── Auth routes (split-screen layout, protected by guestGuard) ──
   {
     path: 'auth',
     loadComponent: () =>
       import('./layouts/auth-layout/auth-layout.component').then(
         m => m.AuthLayoutComponent
       ),
-    canActivate: [publicGuard],
+    canActivate: [guestGuard],
     children: [
       {
         path: 'login',
@@ -82,40 +82,84 @@ export const routes: Routes = [
     ],
   },
 
-  // ── Protected routes ─────────────────────────────────────
+  // ── Protected routes (grouped under Private Layout & authGuard) ──
   {
-    path: 'dashboard',
+    path: '',
     canActivate: [authGuard],
-    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
-      import('./features/dashboard/dashboard.component').then(
-        m => m.DashboardComponent
+      import('./layouts/private-layout/private-layout.component').then(
+        m => m.PrivateLayoutComponent
       ),
-    title: 'Dashboard – Deficcitto',
-  },
-  {
-    path: 'dashboard/planes/:id',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import(
-        './features/dashboard/components/plan-detail/plan-detail.component'
-      ).then(m => m.PlanDetailComponent),
-    title: 'Detalle del Plan – Deficcitto',
-  },
-  {
-    path: 'dashboard/planes/:id/editar',
-    canActivate: [authGuard],
-    canDeactivate: [unsavedChangesGuard],
-    loadComponent: () =>
-      import(
-        './features/dashboard/components/plan-edit/plan-edit.component'
-      ).then(m => m.PlanEditComponent),
-    title: 'Editar Plan – Deficcitto',
+    children: [
+      {
+        path: 'dashboard',
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then(
+            m => m.DashboardComponent
+          ),
+        title: 'Dashboard – Deficcitto',
+      },
+      {
+        path: 'dashboard/planes/:id',
+        loadComponent: () =>
+          import(
+            './features/dashboard/components/plan-detail/plan-detail.component'
+          ).then(m => m.PlanDetailComponent),
+        title: 'Detalle del Plan – Deficcitto',
+      },
+      {
+        path: 'dashboard/planes/:id/editar',
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import(
+            './features/dashboard/components/plan-edit/plan-edit.component'
+          ).then(m => m.PlanEditComponent),
+        title: 'Editar Plan – Deficcitto',
+      },
+      {
+        path: 'admin/usuarios',
+        canActivate: [roleGuard],
+        data: { roles: ['admin'] },
+        loadComponent: () =>
+          import('./features/admin/users/users.component').then(
+            m => m.AdminUsersComponent
+          ),
+        title: 'Gestión de Usuarios – Deficcitto',
+      },
+      {
+        path: 'admin',
+        redirectTo: 'admin/usuarios',
+        pathMatch: 'full',
+      },
+    ],
   },
 
-  // ── Fallback ──────────────────────────────────────────────
+  // ── Error views (403 Acceso Denegado & 404 No Encontrado) ──
+  {
+    path: '403',
+    loadComponent: () =>
+      import('./features/forbidden/forbidden.component').then(
+        m => m.ForbiddenComponent
+      ),
+    title: '403 – Acceso denegado – Deficcitto',
+  },
+  {
+    path: '404',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then(
+        m => m.NotFoundComponent
+      ),
+    title: '404 – Página no encontrada – Deficcitto',
+  },
+
+  // ── Fallback (** -> vista 404) ───────────────────────────
   {
     path: '**',
-    redirectTo: '',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then(
+        m => m.NotFoundComponent
+      ),
+    title: '404 – Página no encontrada – Deficcitto',
   },
 ];
