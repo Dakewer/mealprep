@@ -1,53 +1,179 @@
 <section class="card" aria-labelledby="builder-title">
-  <h2 id="builder-title" class="card__title">Crear un plan de comidas</h2>
+  <header class="card__header">
+    <div>
+      <h2 id="builder-title" class="card__title">
+        {{ isEditMode() ? 'Editar plan de comidas' : 'Crear un plan de comidas' }}
+      </h2>
+      <p class="card__subtitle">
+        {{
+          isEditMode()
+            ? 'Ajusta el nombre, la descripción o las porciones y guarda los cambios.'
+            : 'Define el nombre de tu menú, añade ingredientes y ajusta sus cantidades en gramos.'
+        }}
+      </p>
+    </div>
+  </header>
 
   <div class="builder">
-    <div class="builder__form">
-      <div class="field">
-        <label for="plan-name">Nombre del plan</label>
-        <input id="plan-name" type="text" placeholder="Ej. Comida del lunes"
-               [value]="planName()" (input)="onName($event)" />
+    <form class="builder__form" [formGroup]="planForm" (ngSubmit)="save()" novalidate>
+      <!-- Campo: Nombre del plan -->
+      <div class="field" [class.field--invalid]="isFieldInvalid('name')">
+        <label for="plan-name">
+          Nombre del plan <span class="required-mark" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="plan-name"
+          type="text"
+          formControlName="name"
+          placeholder="Ej. Comida del lunes"
+          autocomplete="off"
+          [attr.aria-invalid]="isFieldInvalid('name')"
+          [attr.aria-describedby]="nameErrorMessage ? 'plan-name-error' : null"
+        />
+        @if (nameErrorMessage; as errorMsg) {
+          <p id="plan-name-error" class="field__error" role="alert">
+            {{ errorMsg }}
+          </p>
+        }
       </div>
 
+      <!-- Campo: Descripción opcional -->
+      <div class="field" [class.field--invalid]="isFieldInvalid('description')">
+        <div class="field__label-row">
+          <label for="plan-description">Descripción (opcional)</label>
+          <span class="field__counter" aria-live="polite">
+            {{ descriptionControl.value.length }}/240
+          </span>
+        </div>
+        <textarea
+          id="plan-description"
+          rows="2"
+          formControlName="description"
+          placeholder="Ej. Alta en proteína para después de entrenar."
+          [attr.aria-invalid]="isFieldInvalid('description')"
+          [attr.aria-describedby]="descriptionErrorMessage ? 'plan-desc-error' : null"
+        ></textarea>
+        @if (descriptionErrorMessage; as descError) {
+          <p id="plan-desc-error" class="field__error" role="alert">
+            {{ descError }}
+          </p>
+        }
+      </div>
+
+      <!-- Selector de ingredientes -->
       <div class="field">
-        <label for="ing-select">Agregar ingrediente</label>
+        <label for="ing-select">
+          Agregar ingrediente <span class="required-mark" aria-hidden="true">*</span>
+        </label>
         <div class="add-row">
-          <select id="ing-select" #sel>
+          <select id="ing-select" #sel [disabled]="isSaving()">
             <option value="">Elige un ingrediente…</option>
             @for (ing of available(); track ing.id) {
-              <option [value]="ing.id">{{ ing.name }}</option>
+              <option [value]="ing.id">{{ ing.name }} ({{ ing.calories }} kcal / 100g)</option>
             }
           </select>
-          <button type="button" class="btn btn--outline btn--sm"
-                  (click)="add(sel.value); sel.value = ''" appRipple>Añadir</button>
+          <button
+            type="button"
+            class="btn btn--outline btn--sm"
+            [disabled]="isSaving()"
+            (click)="add(sel.value); sel.value = ''"
+            appRipple
+          >
+            Añadir
+          </button>
         </div>
       </div>
 
+      <!-- Lista reactiva de ingredientes del plan -->
       @if (rows().length === 0) {
-        <p class="empty">Aún no hay ingredientes. Agrega algunos y ajusta las cantidades con los sliders.</p>
+        <p class="empty" [class.empty--error]="!!itemsErrorMessage">
+          Aún no hay ingredientes. Agrega al menos uno y ajusta las cantidades con los controles.
+        </p>
       } @else {
-        <ul class="items">
-          @for (row of rows(); track row.ingredientId) {
-            <li class="item">
+        <ul class="items" formArrayName="items" aria-label="Ingredientes seleccionados">
+          @for (row of rows(); track row.ingredientId; let i = $index) {
+            <li class="item" [formGroupName]="i" [class.item--invalid]="!!itemGramsError(i)">
               <div class="item__head">
                 <span class="item__name">{{ row.ingredient.name }}</span>
-                <span class="item__grams">{{ row.grams }} g</span>
-                <button type="button" class="item__remove"
-                        [attr.aria-label]="'Quitar ' + row.ingredient.name"
-                        (click)="remove(row.ingredientId)">✕</button>
+                <div class="item__grams-control">
+                  <input
+                    type="number"
+                    class="item__grams-input"
+                    [attr.aria-label]="'Cantidad en gramos de ' + row.ingredient.name"
+                    [min]="sliderMin"
+                    [max]="sliderMax"
+                    [step]="sliderStep"
+                    [value]="row.grams"
+                    [disabled]="isSaving()"
+                    (input)="setGrams(row.ingredientId, +$any($event.target).value)"
+                  />
+                  <span class="item__grams-unit">g</span>
+                </div>
+                <button
+                  type="button"
+                  class="item__remove"
+                  [disabled]="isSaving()"
+                  [attr.aria-label]="'Quitar ' + row.ingredient.name"
+                  (click)="remove(row.ingredientId)"
+                >
+                  ✕
+                </button>
               </div>
-              <input type="range" class="item__slider"
-                     [attr.aria-label]="'Gramos de ' + row.ingredient.name"
-                     [min]="sliderMin" [max]="sliderMax" [step]="sliderStep"
-                     [value]="row.grams"
-                     (input)="setGrams(row.ingredientId, +$any($event.target).value)" />
+              <input
+                type="range"
+                class="item__slider"
+                [attr.aria-label]="'Gramos de ' + row.ingredient.name"
+                [min]="sliderMin"
+                [max]="sliderMax"
+                [step]="sliderStep"
+                [value]="row.grams"
+                [disabled]="isSaving()"
+                (input)="setGrams(row.ingredientId, +$any($event.target).value)"
+              />
+              @if (itemGramsError(i); as gramsErr) {
+                <p class="field__error item__error" role="alert">{{ gramsErr }}</p>
+              }
             </li>
           }
         </ul>
       }
 
-      <button type="button" class="btn btn--primary" (click)="save()" appRipple>Guardar plan</button>
-    </div>
+      @if (itemsErrorMessage; as itemsErr) {
+        <p id="plan-items-error" class="field__error" role="alert">
+          {{ itemsErr }}
+        </p>
+      }
+
+      <!-- Acciones del formulario -->
+      <div class="builder__actions">
+        @if (isEditMode()) {
+          <button
+            type="button"
+            class="btn btn--outline"
+            [disabled]="isSaving()"
+            (click)="onCancel()"
+            appRipple
+          >
+            Cancelar
+          </button>
+        }
+
+        <button
+          type="submit"
+          class="btn btn--primary builder__submit"
+          [disabled]="isSaving()"
+          [attr.aria-busy]="isSaving()"
+          appRipple
+        >
+          @if (isSaving()) {
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <span>{{ isEditMode() ? 'Guardando cambios…' : 'Guardando…' }}</span>
+          } @else {
+            <span>{{ isEditMode() ? 'Guardar cambios' : 'Guardar plan' }}</span>
+          }
+        </button>
+      </div>
+    </form>
 
     <aside class="builder__summary" aria-label="Resumen nutricional del plan">
       <h3 class="summary__title">Tu plan vs. tu meta diaria</h3>

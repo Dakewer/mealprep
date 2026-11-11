@@ -1,15 +1,28 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { User, LoginCredentials, RegisterData } from '../models/app.models';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from '../config/api-base-url.token';
+import { toApiError } from '../errors/api-error';
+import { LoginCredentials, RegisterData, User } from '../models/app.models';
 
 export type AuthStatus = 'idle' | 'loading' | 'success' | 'error';
 
+interface ApiUserResponse {
+  id?: string | number;
+  name?: string;
+  email?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private http    = inject(HttpClient, { optional: true });
+  private baseUrl = inject(API_BASE_URL, { optional: true }) ?? 'http://localhost:3000';
+
   // ── Private state ─────────────────────────────────────────
   private _isAuthenticated = signal<boolean>(false);
-  private _currentUser = signal<User | null>(null);
-  private _status = signal<AuthStatus>('idle');
-  private _error = signal<string | null>(null);
+  private _currentUser     = signal<User | null>(null);
+  private _status          = signal<AuthStatus>('idle');
+  private _error           = signal<string | null>(null);
 
   // ── Public readonly signals ───────────────────────────────
   readonly isAuthenticated = this._isAuthenticated.asReadonly();
@@ -19,91 +32,135 @@ export class AuthService {
 
   readonly isLoading = computed(() => this._status() === 'loading');
 
+  private get usersUrl(): string {
+    return `${this.baseUrl}/users`;
+  }
+
   constructor() {
     this.checkStoredSession();
   }
 
-  // ── Auth actions ──────────────────────────────────────────
+  // ── Auth actions (C4: envío a la API sin manejar token ni sesión en servidor) ──
 
   /**
-   * Simula un login. En producción se reemplaza por una llamada HTTP.
-   * Cualquier email/password válido es aceptado en esta versión demo.
+   * Envía los datos del formulario de inicio de sesión a `POST /users` en la API.
+   * No gestiona tokens ni sesiones de servidor (como permite la entrega); solo
+   * conserva el estado local de interfaz para la navegación del cliente.
    */
   async login(credentials: LoginCredentials): Promise<boolean> {
     this._status.set('loading');
     this._error.set(null);
 
-    // Simulate network delay
-    await this.simulateDelay(1000);
+    const email = credentials.email?.trim() ?? '';
+    const password = credentials.password ?? '';
 
-    if (!credentials.email || !credentials.password) {
+    if (!email || !password) {
       this._status.set('error');
       this._error.set('Por favor, completa todos los campos.');
       return false;
     }
 
-    const user: User = {
-      id: 'user-001',
-      name: this.getNameFromEmail(credentials.email),
-      email: credentials.email,
-      avatarInitials: this.getInitials(this.getNameFromEmail(credentials.email)),
-    };
+    try {
+      const payload = {
+        email,
+        password,
+        rememberMe: credentials.rememberMe ?? false,
+        action: 'login' as const,
+        submittedAt: new Date().toISOString(),
+      };
 
-    this._currentUser.set(user);
-    this._isAuthenticated.set(true);
-    this._status.set('success');
+      const res = this.http
+        ? await firstValueFrom(this.http.post<ApiUserResponse>(this.usersUrl, payload))
+        : { id: 'user-001', email };
 
-    if (credentials.rememberMe) {
-      localStorage.setItem('deficcitto_token', 'mock-jwt-token');
-      localStorage.setItem('deficcitto_user', JSON.stringify(user));
-    } else {
-      sessionStorage.setItem('deficcitto_token', 'mock-jwt-token');
-      sessionStorage.setItem('deficcitto_user', JSON.stringify(user));
+      const displayName = res?.name?.trim() || this.getNameFromEmail(email);
+      const user: User = {
+        id: res?.id !== undefined ? String(res.id) : 'user-001',
+        name: displayName,
+        email,
+        avatarInitials: this.getInitials(displayName),
+      };
+
+      this._currentUser.set(user);
+      this._isAuthenticated.set(true);
+      this._status.set('success');
+
+      if (credentials.rememberMe) {
+        localStorage.setItem('deficcitto_user', JSON.stringify(user));
+      } else {
+        sessionStorage.setItem('deficcitto_user', JSON.stringify(user));
+      }
+
+      return true;
+    } catch (error) {
+      const apiErr = toApiError(error);
+      this._status.set('error');
+      this._error.set(apiErr.message);
+      return false;
     }
-
-    return true;
   }
 
   /**
-   * Simula el registro de un nuevo usuario.
+   * Envía los datos del formulario de registro a `POST /users` en la API.
    */
   async register(data: RegisterData): Promise<boolean> {
     this._status.set('loading');
     this._error.set(null);
 
-    await this.simulateDelay(1200);
+    const name = data.name?.trim() ?? '';
+    const email = data.email?.trim() ?? '';
+    const password = data.password ?? '';
 
-    if (!data.name || !data.email || !data.password) {
+    if (!name || !email || !password) {
       this._status.set('error');
       this._error.set('Por favor, completa todos los campos.');
       return false;
     }
 
-    if (data.password !== data.confirmPassword) {
+    if (password !== data.confirmPassword) {
       this._status.set('error');
       this._error.set('Las contraseñas no coinciden.');
       return false;
     }
 
-    const user: User = {
-      id: `user-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      avatarInitials: this.getInitials(data.name),
-    };
+    try {
+      const payload = {
+        name,
+        email,
+        password,
+        objective: data.objective,
+        acceptTerms: data.acceptTerms,
+        action: 'register' as const,
+        createdAt: new Date().toISOString(),
+      };
 
-    this._currentUser.set(user);
-    this._isAuthenticated.set(true);
-    this._status.set('success');
+      const res = this.http
+        ? await firstValueFrom(this.http.post<ApiUserResponse>(this.usersUrl, payload))
+        : { id: `user-${Date.now()}`, name, email };
 
-    sessionStorage.setItem('deficcitto_token', 'mock-jwt-token');
-    sessionStorage.setItem('deficcitto_user', JSON.stringify(user));
+      const user: User = {
+        id: res?.id !== undefined ? String(res.id) : `user-${Date.now()}`,
+        name: res?.name?.trim() || name,
+        email: res?.email?.trim() || email,
+        avatarInitials: this.getInitials(name),
+      };
 
-    return true;
+      this._currentUser.set(user);
+      this._isAuthenticated.set(true);
+      this._status.set('success');
+
+      sessionStorage.setItem('deficcitto_user', JSON.stringify(user));
+      return true;
+    } catch (error) {
+      const apiErr = toApiError(error);
+      this._status.set('error');
+      this._error.set(apiErr.message);
+      return false;
+    }
   }
 
   /**
-   * Cierra la sesión del usuario.
+   * Cierra la sesión activa en la interfaz.
    */
   logout(): void {
     this._isAuthenticated.set(false);
@@ -119,14 +176,11 @@ export class AuthService {
   // ── Private helpers ───────────────────────────────────────
 
   private checkStoredSession(): void {
-    const token =
-      localStorage.getItem('deficcitto_token') ||
-      sessionStorage.getItem('deficcitto_token');
     const rawUser =
       localStorage.getItem('deficcitto_user') ||
       sessionStorage.getItem('deficcitto_user');
 
-    if (token && rawUser) {
+    if (rawUser) {
       try {
         const user: User = JSON.parse(rawUser);
         this._currentUser.set(user);
@@ -148,9 +202,5 @@ export class AuthService {
   private getNameFromEmail(email: string): string {
     const local = email.split('@')[0];
     return local.charAt(0).toUpperCase() + local.slice(1);
-  }
-
-  private simulateDelay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }

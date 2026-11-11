@@ -1,5 +1,11 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { Component, computed, inject, signal } from '@angular/core';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -87,7 +93,7 @@ export class RegisterComponent {
   togglePassword():        void { this.showPassword.update(v => !v); }
   toggleConfirmPassword(): void { this.showConfirmPassword.update(v => !v); }
 
-  // ── Submit ────────────────────────────────────────────────
+  // ── Submit (C4: envía datos a la API por medio de AuthService) ──
   async onSubmit(): Promise<void> {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
@@ -111,9 +117,8 @@ export class RegisterComponent {
 
     if (success) {
       this.notifService.success('¡Cuenta creada! Bienvenido a Deficcitto 🎉');
-      setTimeout(() => this.router.navigate(['/dashboard']), 1200);
-    } else {
-      this.notifService.error('Ocurrió un error al crear la cuenta. Intenta de nuevo.');
+      setTimeout(() => this.router.navigate(['/dashboard']), 800);
     }
+    // Si falla la petición HTTP, el interceptor global ya mostró el toast de error
   }
 }
