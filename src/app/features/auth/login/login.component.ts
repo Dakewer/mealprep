@@ -41,7 +41,7 @@ export class LoginComponent {
     this.showPassword.update(v => !v);
   }
 
-  // ── Submit ────────────────────────────────────────────────
+  // ── Submit (C4: envía datos a la API por medio de AuthService) ──
   async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
@@ -61,9 +61,8 @@ export class LoginComponent {
 
     if (success) {
       this.notifService.success('¡Bienvenido de vuelta! Redirigiendo al dashboard…');
-      setTimeout(() => this.router.navigate(['/dashboard']), 1200);
-    } else {
-      this.notifService.error('Credenciales incorrectas. Intenta de nuevo.');
+      setTimeout(() => this.router.navigate(['/dashboard']), 800);
     }
+    // Si falla la petición HTTP, el interceptor global ya mostró el toast de error
   }
 }
