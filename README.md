@@ -367,6 +367,10 @@ _Pendiente. Aquí se documentarán la lista, la ruta de detalle, el modal de con
   - **Editar (`PUT` en `plan-edit`)**: sale del estado de envío, muestra el mensaje en línea `"No tienes permiso para editar este plan"`, desactiva el guard `canDeactivate` de cambios sin guardar y ofrece un botón para volver al detalle.
   - **Favorito (`PATCH`)**: revierte la estrella a su estado anterior.
   - **Detalle (`GET /dashboard/planes/:id` de otro usuario)**: muestra `<app-error-state>` con `"No tienes acceso a este plan"` en lugar de quedar cargando indefinidamente.
+- **Subida y validación de archivos adjuntos (`Entrega 4`)**:
+  - `src/app/core/validators/file.validators.ts`: valida en cliente antes de enviar que el archivo no esté vacío, que su tipo MIME/extensión sea imagen (`image/jpeg`, `image/png`, `image/webp`) o `application/pdf` y que no supere `5 MB` (`MAX_FILE_SIZE_BYTES`), devolviendo errores claros en español y formateando tamaños (`formatFileSize`).
+  - `FileUploaderComponent` (`src/app/shared/components/file-uploader/`): selección mediante `<input type="file">` y arrastrar y soltar (*drag & drop*), vista previa antes de subir (miniatura con `URL.createObjectURL` liberada automáticamente con `DestroyRef` para imágenes, y tarjeta de metadatos para PDF), barra y porcentaje de progreso en vivo consumiendo `HttpEventType.UploadProgress` de `FilesApiService.upload()`, botón `"Cancelar subida"` (`Subscription.unsubscribe()`), aviso sin conexión (`navigator.onLine` / `connectionOffline`) y manejo de `403` por `ApiError.status`.
+  - Integrado en `plan-detail` envuelto en `*appCanManage="plan()!"` para respetar la regla de dueño y rol `admin`.
 
 ## 6. Flujo de trabajo del equipo
 
