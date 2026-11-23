@@ -5,4 +5,5 @@
 export const environment = {
   production: true,
   apiBaseUrl: 'https://CAMBIAR-por-la-url-de-tu-api',
+  wsUrl: 'wss://CAMBIAR-por-la-url-de-tu-api',
 };

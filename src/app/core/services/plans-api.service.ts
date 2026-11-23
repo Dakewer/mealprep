@@ -135,6 +135,7 @@ export class PlansApiService {
  */
 function toPlan(raw: unknown): NutritionPlan {
   const r = raw as Partial<NutritionPlan> & { id: string | number };
+  const rawFiles = Array.isArray(r.files) ? r.files : Array.isArray(r.attachments) ? r.attachments : undefined;
   return {
     id: String(r.id),
     name: r.name ?? '',
@@ -145,5 +146,7 @@ function toPlan(raw: unknown): NutritionPlan {
     isFavorite: r.isFavorite ?? false,
     tags: r.tags ?? [],
     ...(r.ownerId !== undefined ? { ownerId: String(r.ownerId) } : {}),
+    ...(rawFiles !== undefined ? { files: rawFiles } : {}),
+    ...(r.attachments !== undefined ? { attachments: r.attachments } : {}),
   };
 }

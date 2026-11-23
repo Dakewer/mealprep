@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { RealtimeService } from '../../core/services/realtime.service';
 import { HasRoleDirective } from '../../shared/directives/has-role.directive';
 import { RippleDirective } from '../../shared/directives/ripple.directive';
 
@@ -44,6 +45,25 @@ import { RippleDirective } from '../../shared/directives/ripple.directive';
         </div>
 
         <div class="private-topbar__right">
+          <!-- B1: Indicador de estado de la conexión en tiempo real -->
+          <div
+            class="connection-badge"
+            [class.connection-badge--connected]="connectionStatus() === 'connected'"
+            [class.connection-badge--reconnecting]="connectionStatus() === 'reconnecting'"
+            [class.connection-badge--disconnected]="connectionStatus() === 'disconnected'"
+            role="status"
+            aria-live="polite"
+            [attr.aria-label]="'Estado de la conexión: ' + connectionLabel()"
+            data-testid="connection-status-badge"
+          >
+            <span
+              class="connection-badge__dot"
+              [class.connection-badge__dot--pulse]="connectionStatus() === 'reconnecting'"
+              aria-hidden="true"
+            ></span>
+            <span class="connection-badge__text">{{ connectionLabel() }}</span>
+          </div>
+
           <div class="user-profile-badge">
             <span class="user-avatar" aria-hidden="true">
               {{ authService.currentUser()?.avatarInitials || 'U' }}
@@ -179,6 +199,75 @@ import { RippleDirective } from '../../shared/directives/ripple.directive';
       gap: 1.25rem;
     }
 
+    /* B1: Connection Status Badge */
+    .connection-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+    }
+
+    .connection-badge__dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .connection-badge--connected {
+      background: #ecfdf5;
+      color: #15803d;
+      border: 1px solid #a7f3d0;
+    }
+
+    .connection-badge--connected .connection-badge__dot {
+      background: #16a34a;
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+    }
+
+    .connection-badge--reconnecting {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .connection-badge--reconnecting .connection-badge__dot {
+      background: #f59e0b;
+    }
+
+    .connection-badge__dot--pulse {
+      animation: connection-pulse 1.25s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .connection-badge--disconnected {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .connection-badge--disconnected .connection-badge__dot {
+      background: #ef4444;
+    }
+
+    @keyframes connection-pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55);
+      }
+      50% {
+        opacity: 0.55;
+        transform: scale(1.2);
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
+      }
+    }
+
     .user-profile-badge {
       display: flex;
       align-items: center;
@@ -270,7 +359,22 @@ import { RippleDirective } from '../../shared/directives/ripple.directive';
 })
 export class PrivateLayoutComponent {
   readonly authService = inject(AuthService);
+  readonly realtimeService = inject(RealtimeService);
   private readonly router = inject(Router);
+
+  readonly connectionStatus = this.realtimeService.connectionStatus;
+
+  readonly connectionLabel = computed(() => {
+    switch (this.connectionStatus()) {
+      case 'connected':
+        return 'Conectado';
+      case 'reconnecting':
+        return 'Reconectando...';
+      case 'disconnected':
+      default:
+        return 'Desconectado';
+    }
+  });
 
   isAdmin(): boolean {
     return this.authService.hasRole('admin');

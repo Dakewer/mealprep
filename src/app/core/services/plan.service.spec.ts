@@ -1,13 +1,15 @@
+import { ApplicationRef } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { API_BASE_URL } from '../config/api-base-url.token';
 import { httpErrorInterceptor } from '../interceptors/http-error.interceptor';
-import { NutritionPlan, PlanPayload } from '../models/app.models';
+import { NutritionPlan, PlanAttachment, PlanPayload } from '../models/app.models';
 import { expInSeconds, fakeJwt } from '../testing/fake-jwt';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
 import { PlanService } from './plan.service';
+import { RealtimeService } from './realtime.service';
 
 const BASE = 'http://api.test';
 
@@ -231,5 +233,61 @@ describe('PlanService', () => {
     setup();
     expect(service.profile().weightKg).toBe(60);
     expect(service.profile().objective).toBe('deficit');
+  });
+
+  it('B2: actualiza la lista en tiempo real ante plan:created, plan:updated, plan:deleted, plan:file-added y plan:file-removed', async () => {
+    setup([plan('1', { name: 'Original' })]);
+    await Promise.resolve();
+
+    const realtime = TestBed.inject(RealtimeService);
+
+    // 1. plan:created
+    realtime.emit({ type: 'plan:created', payload: plan('2', { name: 'Creado RT' }) }, false);
+    expect(service.plans().map(p => p.id)).toEqual(['2', '1']);
+
+    // 2. plan:updated
+    realtime.emit({ type: 'plan:updated', payload: plan('1', { name: 'Editado RT' }) }, false);
+    expect(service.plans().find(p => p.id === '1')?.name).toBe('Editado RT');
+
+    // 3. plan:file-added
+    const att: PlanAttachment = {
+      id: 'file-1',
+      planId: '1',
+      name: 'menu.pdf',
+      mimeType: 'application/pdf',
+      size: 204800,
+      url: '/uploads/menu.pdf',
+      createdAt: '2026-11-01T10:00:00.000Z',
+    };
+    realtime.emit({ type: 'plan:file-added', planId: '1', file: att }, false);
+    expect(service.getPlanAttachments(service.plans().find(p => p.id === '1')).length).toBe(1);
+
+    // 4. plan:file-removed
+    realtime.emit({ type: 'plan:file-removed', planId: '1', fileId: 'file-1' }, false);
+    expect(service.getPlanAttachments(service.plans().find(p => p.id === '1')).length).toBe(0);
+
+    // 5. plan:deleted
+    realtime.emit({ type: 'plan:deleted', payload: { id: '2' } }, false);
+    expect(service.plans().map(p => p.id)).toEqual(['1']);
+  });
+
+  it('B2: al pasar de reconnecting a connected dispara loadPlans() para resincronizar cambios perdidos', async () => {
+    setup([plan('1')]);
+    await Promise.resolve();
+
+    const realtime = TestBed.inject(RealtimeService);
+    const appRef = TestBed.inject(ApplicationRef);
+
+    realtime.setConnectionStatus('reconnecting');
+    appRef.tick();
+
+    realtime.setConnectionStatus('connected');
+    appRef.tick();
+
+    const req = http.expectOne(r => r.url === `${BASE}/plans`);
+    req.flush([plan('1'), plan('2'), plan('3')]);
+    await Promise.resolve();
+
+    expect(service.plans().map(p => p.id)).toEqual(['1', '2', '3']);
   });
 });
