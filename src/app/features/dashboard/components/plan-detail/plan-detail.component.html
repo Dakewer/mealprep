@@ -310,6 +310,30 @@
         </aside>
       </div>
 
+      <!-- Subida de archivos adjuntos del plan (C4, solo dueño o admin con *appCanManage) -->
+      <section
+        *appCanManage="plan()!"
+        class="card detail-upload-card"
+        aria-labelledby="upload-heading"
+      >
+        <div class="card-head">
+          <h2 id="upload-heading" class="card-head__title">
+            <svg class="heading-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span>Adjuntar archivos al plan</span>
+          </h2>
+          <span class="card-head__subtitle">Sube fotos del platillo o una ficha nutricional en PDF (máximo 5 MB)</span>
+        </div>
+
+        <app-file-uploader
+          [planId]="plan()!.id"
+          (uploaded)="onFileUploaded($event)"
+        />
+      </section>
+
       <!-- Modal accesible de confirmación para eliminar (B4) -->
       <app-confirm-modal
         #confirmModal
