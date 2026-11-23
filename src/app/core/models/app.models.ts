@@ -117,3 +117,14 @@ export interface PlanItem {
   ingredientId: string;
   grams: number;
 }
+
+// ── Archivos adjuntos de un plan (Entrega 4) ────────────────
+export interface PlanAttachment {
+  id: string;
+  planId: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  createdAt: string;
+}
