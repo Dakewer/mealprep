@@ -9,8 +9,10 @@ import {
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NutritionPlan } from '../../../../core/models/app.models';
+import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { PlanService } from '../../../../core/services/plan.service';
+import { CanManageDirective, HasRoleDirective } from '../../../../shared/directives/has-role.directive';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -24,6 +26,8 @@ import { LoadingStateComponent } from '../../../../shared/components/loading-sta
     DatePipe,
     RouterLink,
     RippleDirective,
+    HasRoleDirective,
+    CanManageDirective,
     ConfirmModalComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -34,6 +38,7 @@ import { LoadingStateComponent } from '../../../../shared/components/loading-sta
 })
 export class PlanListComponent {
   private notif = inject(NotificationService);
+  private authService = inject(AuthService);
   plans = inject(PlanService);
 
   /** Se emite tras generar una lista de compras, para que el dashboard cambie de pestaña. */
@@ -95,6 +100,12 @@ export class PlanListComponent {
 
   ingredientName(id: string): string {
     return this.plans.ingredients.find(i => i.id === id)?.name ?? id;
+  }
+
+  /** Indica si el plan pertenece a una cuenta distinta a la del usuario autenticado. */
+  isOtherUserPlan(plan: NutritionPlan): boolean {
+    const currentId = this.authService.currentUser()?.id;
+    return Boolean(plan.ownerId && currentId && plan.ownerId !== currentId);
   }
 
   // ── Manejo de Búsqueda ──────────────────────────────────
@@ -166,18 +177,31 @@ export class PlanListComponent {
 
   async onDeleteConfirmed(): Promise<void> {
     const target = this.planPendingDeletion();
-    if (target) {
+    if (!target) return;
+
+    const currentPageSnapshot = this.currentPage();
+    this.isLoading.set(true);
+    try {
       const success = await this.plans.deletePlan(target.id);
-      if (success) {
-        this.notif.success(`Plan "${target.name}" eliminado correctamente.`);
-      }
       this.confirmModal().close();
       this.planPendingDeletion.set(null);
 
-      // Si la página actual queda vacía, retroceder una página
-      if (this.pagedPlans().length === 0 && this.currentPage() > 1) {
-        this.currentPage.update(p => p - 1);
+      if (success) {
+        this.notif.success(`Plan "${target.name}" eliminado correctamente.`);
+        // Si la página actual queda vacía, retroceder una página
+        if (this.pagedPlans().length === 0 && this.currentPage() > 1) {
+          this.currentPage.update(p => p - 1);
+        }
+        return;
       }
+
+      // Si la API respondió 403, el plan sigue en la lista (revertido en deletePlan)
+      // y se mantiene/recarga la página actual sin duplicar el toast del interceptor.
+      if (this.plans.plansError()?.status === 403) {
+        this.currentPage.set(Math.min(currentPageSnapshot, this.totalPages()));
+      }
+    } finally {
+      this.isLoading.set(false);
     }
   }
 

@@ -144,6 +144,20 @@
         </p>
       }
 
+      @if (forbiddenError(); as forbiddenMsg) {
+        <div class="builder__forbidden" role="alert">
+          <p class="builder__forbidden-text">{{ forbiddenMsg }}</p>
+          <button
+            type="button"
+            class="btn btn--outline btn--sm"
+            (click)="onCancel()"
+            appRipple
+          >
+            ← Volver al detalle
+          </button>
+        </div>
+      }
+
       <!-- Acciones del formulario -->
       <div class="builder__actions">
         @if (isEditMode()) {

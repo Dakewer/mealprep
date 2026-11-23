@@ -144,5 +144,6 @@ function toPlan(raw: unknown): NutritionPlan {
     createdAt: r.createdAt ?? new Date(0).toISOString(),
     isFavorite: r.isFavorite ?? false,
     tags: r.tags ?? [],
+    ...(r.ownerId !== undefined ? { ownerId: String(r.ownerId) } : {}),
   };
 }

@@ -20,8 +20,25 @@
   </header>
 
   <main class="detail-main">
-    <!-- ══ CASO 1: PLAN NO ENCONTRADO (404) ═══════════════════ -->
-    @if (!plan()) {
+    <!-- ══ CASO 0: CARGANDO DETALLE ════════════════════════════ -->
+    @if (isLoadingDetail() && !plan()) {
+      <app-loading-state message="Cargando información del plan…" />
+    }
+
+    <!-- ══ CASO 1: ACCESO DENEGADO (403) ═══════════════════════ -->
+    @else if (isForbidden()) {
+      <div class="forbidden-state-wrapper">
+        <app-error-state
+          title="No tienes acceso a este plan"
+          message="Este plan pertenece a otro usuario y no cuentas con permisos para consultarlo."
+          retryLabel="Volver a Mis Planes"
+          (retry)="backToDashboard()"
+        />
+      </div>
+    }
+
+    <!-- ══ CASO 2: PLAN NO ENCONTRADO (404) ═══════════════════ -->
+    @else if (!plan()) {
       <div class="not-found-card" role="alert">
         <div class="not-found-icon" aria-hidden="true">
           <!-- Cubiertos cruzados estilizados para 404 -->
@@ -72,7 +89,12 @@
       <header class="plan-header-card">
         <div class="plan-header-card__top">
           <div class="plan-header-card__info">
-            <h1 class="plan-header-card__title">{{ plan()!.name }}</h1>
+            <div class="plan-header-card__title-row">
+              <h1 class="plan-header-card__title">{{ plan()!.name }}</h1>
+              @if (isOtherUserPlan(plan()!)) {
+                <span *appHasRole="'admin'" class="other-user-badge">de otro usuario</span>
+              }
+            </div>
             <p class="plan-header-card__meta">
               <span class="meta-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -254,8 +276,9 @@
                 <span>Generar lista de compras</span>
               </button>
 
-              <!-- Enlace a la ruta de edición de Luis (C3) -->
+              <!-- Enlace a la ruta de edición de Luis (C3, solo dueño o admin con *appCanManage) -->
               <a
+                *appCanManage="plan()!"
                 [routerLink]="['/dashboard/planes', plan()!.id, 'editar']"
                 class="btn btn--outline btn--full action-btn-with-icon"
                 appRipple
@@ -268,6 +291,7 @@
               </a>
 
               <button
+                *appCanManage="plan()!"
                 type="button"
                 class="btn btn--ghost-dark btn--full btn-delete-action action-btn-with-icon"
                 (click)="requestDelete()"

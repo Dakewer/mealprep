@@ -47,4 +47,5 @@ __screenshots__/
 Thumbs.db
 
 # API simulada (json-server): copia local que se modifica al usar la app
+.env
 /api/db.json

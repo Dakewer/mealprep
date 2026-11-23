@@ -1,12 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { HasRoleDirective } from '../../shared/directives/has-role.directive';
 import { RippleDirective } from '../../shared/directives/ripple.directive';
 
 @Component({
   selector: 'app-private-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, RippleDirective],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, RippleDirective, HasRoleDirective],
   template: `
     <div class="private-shell">
       <header class="private-topbar">
@@ -30,16 +31,15 @@ import { RippleDirective } from '../../shared/directives/ripple.directive';
             >
               Dashboard
             </a>
-            @if (isAdmin()) {
-              <a
-                routerLink="/admin/usuarios"
-                routerLinkActive="private-nav__link--active"
-                class="private-nav__link private-nav__link--admin"
-              >
-                <span>Gestión de Usuarios</span>
-                <span class="admin-chip">Admin</span>
-              </a>
-            }
+            <a
+              *appHasRole="'admin'"
+              routerLink="/admin/usuarios"
+              routerLinkActive="private-nav__link--active"
+              class="private-nav__link private-nav__link--admin"
+            >
+              <span>Gestión de Usuarios</span>
+              <span class="admin-chip">Admin</span>
+            </a>
           </nav>
         </div>
 
@@ -273,7 +273,7 @@ export class PrivateLayoutComponent {
   private readonly router = inject(Router);
 
   isAdmin(): boolean {
-    return this.authService.currentUser()?.role === 'admin';
+    return this.authService.hasRole('admin');
   }
 
   handleLogout(): void {
