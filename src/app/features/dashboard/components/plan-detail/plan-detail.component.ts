@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiError, toApiError } from '../../../../core/errors/api-error';
-import { NutritionPlan } from '../../../../core/models/app.models';
+import { NutritionPlan, PlanAttachment } from '../../../../core/models/app.models';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { NutritionService } from '../../../../core/services/nutrition.service';
@@ -11,6 +11,7 @@ import { PlanService } from '../../../../core/services/plan.service';
 import { PlansApiService } from '../../../../core/services/plans-api.service';
 import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { FileUploaderComponent } from '../../../../shared/components/file-uploader/file-uploader.component';
 import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
 import { MacroBarsComponent } from '../../../../shared/components/macro-bars/macro-bars.component';
 import { CanManageDirective, HasRoleDirective } from '../../../../shared/directives/has-role.directive';
@@ -28,6 +29,7 @@ import { RippleDirective } from '../../../../shared/directives/ripple.directive'
     MacroBarsComponent,
     ConfirmModalComponent,
     ErrorStateComponent,
+    FileUploaderComponent,
     LoadingStateComponent,
   ],
   templateUrl: './plan-detail.component.html',
@@ -195,6 +197,10 @@ export class PlanDetailComponent {
         this.router.navigate(['/dashboard']);
       }
     }
+  }
+
+  onFileUploaded(_attachment: PlanAttachment): void {
+    void this.plans.loadPlans();
   }
 
   categoryColorClass(category: string): string {
