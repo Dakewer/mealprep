@@ -4,9 +4,11 @@ import { provideRouter, withComponentInputBinding, withViewTransitions } from '@
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { API_BASE_URL } from './core/config/api-base-url.token';
+import { WS_URL } from './core/config/ws-url.token';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { httpErrorInterceptor } from './core/interceptors/http-error.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { RealtimeService } from './core/services/realtime.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,9 +22,13 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, httpErrorInterceptor])),
     // La URL base sale del entorno (src/environments)
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
+    // URL del canal WebSocket (src/environments)
+    { provide: WS_URL, useValue: environment.wsUrl },
     // Al arrancar, refresca al usuario de la sesión guardada (GET /auth/me) sin bloquear la app
     provideAppInitializer(() => {
       void inject(AuthService).restoreSession();
+      // Instanciarlo aquí activa su effect: abre el WebSocket al haber sesión y lo cierra al salir
+      inject(RealtimeService);
     }),
   ],
 };
