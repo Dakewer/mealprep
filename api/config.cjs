@@ -21,4 +21,9 @@ module.exports = {
   // Opcionales (no están en .env.example): orígenes CORS y retraso artificial para ver los estados de carga.
   corsOrigins: (process.env.CORS_ORIGIN || 'http://localhost:4200').split(',').map(o => o.trim()),
   delayMs: Number(process.env.API_DELAY_MS) || 0,
+  // Archivos adjuntos de los planes (opcionales: FILES_MAX_MB).
+  uploadsDir: path.join(__dirname, 'uploads'),
+  maxFileBytes: (Number(process.env.FILES_MAX_MB) || 5) * 1024 * 1024,
+  maxFilesPerPlan: 10,
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
 };
