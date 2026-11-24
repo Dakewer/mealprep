@@ -1,4 +1,3 @@
-import { HttpEvent, HttpEventType } from '@angular/common/http';
 import {
   Component,
   DestroyRef,
@@ -209,22 +208,20 @@ export class FileUploaderComponent {
     this.cancelNotice.set(null);
 
     this.activeUploadSub = this.filesApi.upload(this.planId(), file).subscribe({
-      next: (event: HttpEvent<PlanAttachment>) => {
-        if (event.type === HttpEventType.UploadProgress) {
-          if (event.total && event.total > 0) {
-            const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
-            this.uploadProgress.set(percent);
-          }
+      next: (event) => {
+        // El nuevo servicio emite { type: 'progress', percent: ... } o { type: 'done', attachment: ... }
+        if (event.type === 'progress') {
+          this.uploadProgress.set(event.percent ?? 0);
           return;
         }
 
-        if (event.type === HttpEventType.Response) {
+        if (event.type === 'done') {
           this.uploadProgress.set(100);
           this.isUploading.set(false);
           this.activeUploadSub = null;
 
-          if (event.body) {
-            this.uploaded.emit(event.body);
+          if (event.attachment) {
+            this.uploaded.emit(event.attachment);
           }
           this.notif.success(`Archivo "${file.name}" subido correctamente.`);
           this.clearSelection();
@@ -237,7 +234,6 @@ export class FileUploaderComponent {
         this.activeUploadSub = null;
 
         if (apiError.status === 403) {
-          // El interceptor global ya mostró el toast "Acceso denegado"; solo pintamos el mensaje en línea.
           this.uploadError.set('No tienes permiso para subir archivos a este plan.');
           return;
         }
