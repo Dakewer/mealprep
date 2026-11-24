@@ -1,10 +1,9 @@
-import { HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { vi } from 'vitest';
 import { ApiError } from '../../../core/errors/api-error';
 import { PlanAttachment } from '../../../core/models/app.models';
-import { FilesApiService } from '../../../core/services/files-api.service';
+import { FilesApiService, UploadEvent } from '../../../core/services/files-api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { FileUploaderComponent } from './file-uploader.component';
 
@@ -17,12 +16,12 @@ function makeFile(name: string, type: string, sizeBytes: number): File {
 describe('FileUploaderComponent', () => {
   let fixture: ComponentFixture<FileUploaderComponent>;
   let component: FileUploaderComponent;
-  let uploadSubject: Subject<HttpEvent<PlanAttachment>>;
+  let uploadSubject: Subject<UploadEvent>; // Cambiado a UploadEvent
   let uploadSpy: ReturnType<typeof vi.fn>;
   let notif: NotificationService;
 
   beforeEach(async () => {
-    uploadSubject = new Subject<HttpEvent<PlanAttachment>>();
+    uploadSubject = new Subject<UploadEvent>();
     uploadSpy = vi.fn().mockReturnValue(uploadSubject.asObservable());
 
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/preview-1');
@@ -83,10 +82,12 @@ describe('FileUploaderComponent', () => {
     expect(uploadSpy).toHaveBeenCalledWith('plan-001', image);
     expect(component.isUploading()).toBe(true);
 
+    // Enviamos un evento de progreso compatible con el nuevo UploadEvent
     uploadSubject.next({
-      type: HttpEventType.UploadProgress,
+      type: 'progress',
       loaded: 100_000,
       total: 200_000,
+      percent: 50
     });
     fixture.detectChanges();
 
@@ -104,7 +105,9 @@ describe('FileUploaderComponent', () => {
       url: '/uploads/pollo.jpg',
       createdAt: '2026-11-23T12:00:00.000Z',
     };
-    uploadSubject.next(new HttpResponse({ status: 201, body: attachment }));
+
+    // Enviamos el evento final compatible con el nuevo UploadEvent
+    uploadSubject.next({ type: 'done', attachment });
     uploadSubject.complete();
     fixture.detectChanges();
 
