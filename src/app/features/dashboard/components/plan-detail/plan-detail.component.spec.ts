@@ -143,7 +143,7 @@ describe('PlanDetailComponent · B2, B3 y B4 Galería de archivos y tiempo real'
     await initComponent([makePlan('plan-1', { files: [PDF_ATT] })]);
 
     const downloadPromise = fixture.componentInstance.openOrDownloadAttachment(PDF_ATT);
-    const req = http.expectOne(`${BASE}/uploads/guia-porciones.pdf`);
+    const req = http.expectOne(`${BASE}/plans/plan-1/files/file-pdf-1`);
     expect(req.request.method).toBe('GET');
     expect(req.request.responseType).toBe('blob');
     req.flush(new Blob(['%PDF-1.4'], { type: 'application/pdf' }));

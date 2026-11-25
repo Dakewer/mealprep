@@ -1,0 +1,164 @@
+<div class="uploader">
+  @if (isOffline()) {
+    <div class="uploader__alert uploader__alert--warning" role="alert">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="1" y1="1" x2="23" y2="23" />
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9" />
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+        <line x1="12" y1="20" x2="12.01" y2="20" />
+      </svg>
+      <span>Sin conexión. No es posible subir archivos en este momento.</span>
+    </div>
+  }
+
+  <!-- Zona de selección y arrastrar y soltar (drag & drop) -->
+  <div
+    class="uploader__dropzone"
+    [class.uploader__dropzone--dragging]="isDragging()"
+    [class.uploader__dropzone--disabled]="isUploading() || disabled()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <input
+      #fileInput
+      type="file"
+      class="uploader__input"
+      [accept]="acceptAttr"
+      [disabled]="isUploading() || disabled()"
+      (change)="onFileSelected($event)"
+      aria-label="Seleccionar archivo adjunto (JPG, PNG, WEBP o PDF)"
+    />
+
+    <div class="uploader__dropzone-icon" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+      </svg>
+    </div>
+
+    <p class="uploader__dropzone-title">
+      Arrastra y suelta un archivo aquí
+    </p>
+    <p class="uploader__dropzone-hint">
+      JPG, PNG, WEBP o PDF · Tamaño máximo 5 MB
+    </p>
+
+    <button
+      type="button"
+      class="btn btn--outline btn--sm"
+      [disabled]="isUploading() || disabled()"
+      (click)="openFileDialog()"
+      appRipple
+    >
+      Seleccionar archivo
+    </button>
+  </div>
+
+  <!-- Error de validación en cliente -->
+  @if (validationError(); as err) {
+    <div class="uploader__alert uploader__alert--error" role="alert">
+      <span>{{ err }}</span>
+    </div>
+  }
+
+  <!-- Error de subida (incluye 403) -->
+  @if (uploadError(); as err) {
+    <div class="uploader__alert uploader__alert--error" role="alert">
+      <span>{{ err }}</span>
+    </div>
+  }
+
+  <!-- Aviso de cancelación -->
+  @if (cancelNotice(); as notice) {
+    <div class="uploader__alert uploader__alert--info" role="status">
+      <span>{{ notice }}</span>
+    </div>
+  }
+
+  <!-- Vista previa del archivo seleccionado antes de subir -->
+  @if (selectedFile(); as file) {
+    <div class="uploader__preview">
+      <div class="uploader__preview-media">
+        @if (isImagePreview()) {
+          <img
+            [src]="previewUrl()!"
+            [alt]="'Vista previa de ' + file.name"
+            class="uploader__preview-img"
+          />
+        } @else {
+          <div class="uploader__preview-doc" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+          </div>
+        }
+      </div>
+
+      <div class="uploader__preview-meta">
+        <p class="uploader__file-name" [title]="file.name">{{ file.name }}</p>
+        <p class="uploader__file-info">
+          <span>{{ selectedFileTypeLabel() }}</span>
+          <span aria-hidden="true">·</span>
+          <span>{{ selectedFileSize() }}</span>
+        </p>
+
+        @if (isUploading()) {
+          <div class="uploader__progress-wrap">
+            <div
+              class="uploader__progress-track"
+              role="progressbar"
+              [attr.aria-valuenow]="uploadProgress()"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-label="Progreso de subida del archivo"
+            >
+              <div
+                class="uploader__progress-fill"
+                [style.width.%]="uploadProgress()"
+              ></div>
+            </div>
+            <span class="uploader__progress-label">{{ uploadProgress() }}%</span>
+          </div>
+        }
+      </div>
+
+      <div class="uploader__preview-actions">
+        @if (isUploading()) {
+          <button
+            type="button"
+            class="btn btn--ghost-dark btn--sm uploader__cancel-btn"
+            (click)="cancelUpload()"
+          >
+            Cancelar subida
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn btn--ghost-dark btn--sm"
+            (click)="clearSelection()"
+          >
+            Quitar
+          </button>
+          <button
+            type="button"
+            class="btn btn--primary btn--sm"
+            [disabled]="!canUpload()"
+            (click)="startUpload()"
+            appRipple
+          >
+            Subir archivo
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>

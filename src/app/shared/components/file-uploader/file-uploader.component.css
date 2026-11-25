@@ -1,0 +1,215 @@
+:host {
+  display: block;
+}
+
+.uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.uploader__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.uploader__dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.4rem;
+  padding: 1.5rem 1.25rem;
+  border: 2px dashed var(--clr-light-300, #d1d5db);
+  border-radius: var(--radius-xl, 16px);
+  background: var(--clr-light-50, #f9fafb);
+  transition:
+    border-color var(--transition-fast, 150ms ease),
+    background-color var(--transition-fast, 150ms ease),
+    transform var(--transition-fast, 150ms ease);
+}
+
+.uploader__dropzone--dragging {
+  border-color: var(--clr-primary-500, #22c55e);
+  background: var(--clr-primary-50, #f0fdf4);
+  transform: scale(1.005);
+}
+
+.uploader__dropzone--disabled {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.uploader__dropzone-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--clr-light-200, #e5e7eb);
+  color: var(--clr-primary-600, #16a34a);
+  margin-bottom: 0.25rem;
+}
+
+.uploader__dropzone-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-on-light, #111827);
+}
+
+.uploader__dropzone-hint {
+  margin: 0 0 0.45rem;
+  font-size: 0.8125rem;
+  color: var(--text-on-light-3, #6b7280);
+}
+
+/* Alertas */
+.uploader__alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.uploader__alert--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.uploader__alert--warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.uploader__alert--info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* Vista previa */
+.uploader__preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  background: #fff;
+  border: 1px solid var(--clr-light-200, #e5e7eb);
+  border-radius: var(--radius-lg, 12px);
+  flex-wrap: wrap;
+}
+
+.uploader__preview-media {
+  flex-shrink: 0;
+}
+
+.uploader__preview-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--clr-light-200, #e5e7eb);
+  display: block;
+}
+
+.uploader__preview-doc {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-md, 8px);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploader__preview-meta {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.uploader__file-name {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-on-light, #111827);
+  word-break: break-word;
+}
+
+.uploader__file-info {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--text-on-light-3, #6b7280);
+}
+
+/* Barra de progreso */
+.uploader__progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.uploader__progress-track {
+  flex: 1;
+  height: 8px;
+  background: var(--clr-light-200, #e5e7eb);
+  border-radius: var(--radius-full, 9999px);
+  overflow: hidden;
+}
+
+.uploader__progress-fill {
+  height: 100%;
+  background: var(--clr-primary-600, #16a34a);
+  border-radius: var(--radius-full, 9999px);
+  transition: width 120ms linear;
+}
+
+.uploader__progress-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--clr-primary-700, #15803d);
+  min-width: 2.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.uploader__preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.uploader__cancel-btn {
+  color: var(--clr-error, #ef4444);
+}
+
+.uploader__cancel-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}

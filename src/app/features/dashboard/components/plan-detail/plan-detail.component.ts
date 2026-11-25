@@ -14,9 +14,9 @@ import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, isObservable } from 'rxjs';
 import { ApiError, toApiError } from '../../../../core/errors/api-error';
-import { NutritionPlan, PlanAttachment } from '../../../../core/models/app.models';
+import { ConnectionStatus, NutritionPlan, PlanAttachment, RealtimeMessage } from '../../../../core/models/app.models';
 import { AuthService } from '../../../../core/services/auth.service';
-import { FilesApiService } from '../../../../core/services/files-api.service';
+import { FilesApiService, saveBlob } from '../../../../core/services/files-api.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { NutritionService } from '../../../../core/services/nutrition.service';
 import {
@@ -27,14 +27,11 @@ import {
   extractRealtimePlanId,
 } from '../../../../core/services/plan.service';
 import { PlansApiService } from '../../../../core/services/plans-api.service';
-import {
-  ConnectionStatus,
-  RealtimeEvent,
-  RealtimeService,
-} from '../../../../core/services/realtime.service';
+import { RealtimeEventInput, RealtimeService } from '../../../../core/services/realtime.service';
 import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { FileUploaderComponent } from '../../../../shared/components/file-uploader/file-uploader.component';
 import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
 import { MacroBarsComponent } from '../../../../shared/components/macro-bars/macro-bars.component';
 import { CanManageDirective, HasRoleDirective } from '../../../../shared/directives/has-role.directive';
@@ -53,6 +50,7 @@ import { RippleDirective } from '../../../../shared/directives/ripple.directive'
     ConfirmModalComponent,
     EmptyStateComponent,
     ErrorStateComponent,
+    FileUploaderComponent,
     LoadingStateComponent,
   ],
   templateUrl: './plan-detail.component.html',
@@ -89,7 +87,7 @@ export class PlanDetailComponent {
   readonly offlineActionWarning = signal<string | null>(null);
   readonly attachmentPendingDeletion = signal<PlanAttachment | null>(null);
 
-  readonly isOffline = computed(() => this.realtime.connectionStatus() === 'disconnected');
+  readonly isOffline = computed(() => this.realtime.isOffline?.() ?? this.realtime.connectionStatus() === 'disconnected');
 
   readonly planId = computed(() => {
     return this.id() || this.route.snapshot.paramMap.get('id') || '';
@@ -109,12 +107,24 @@ export class PlanDetailComponent {
   });
 
   private lastFetchedId = '';
+  private lastLoadedAttachmentsPlanId = '';
   private previousConnectionStatus: ConnectionStatus = this.realtime.connectionStatus();
 
   constructor() {
     effect(() => {
       const id = this.planId();
+      const currentPlan = this.plan();
       const inStore = this.plans.plans().some(p => p.id === id);
+
+      if (currentPlan && currentPlan.files === undefined && currentPlan.attachments === undefined) {
+        if (this.lastLoadedAttachmentsPlanId !== id) {
+          this.lastLoadedAttachmentsPlanId = id;
+          untracked(() => {
+            void this.loadAttachments(id);
+          });
+        }
+      }
+
       if (!id || inStore) {
         if (inStore) {
           untracked(() => {
@@ -146,8 +156,11 @@ export class PlanDetailComponent {
       if (wasReconnecting && status === 'connected') {
         untracked(() => {
           const id = this.planId();
-          if (id && !this.plans.plans().some(p => p.id === id)) {
-            void this.fetchPlanById(id);
+          if (id) {
+            if (!this.plans.plans().some(p => p.id === id)) {
+              void this.fetchPlanById(id);
+            }
+            void this.loadAttachments(id);
           }
         });
       }
@@ -161,11 +174,12 @@ export class PlanDetailComponent {
       });
   }
 
-  private onRealtimeEvent(event: RealtimeEvent): void {
+  private onRealtimeEvent(event: RealtimeMessage | RealtimeEventInput): void {
     const currentId = this.planId();
     if (!currentId) return;
 
-    switch (event.type) {
+    const eventType = (event as RealtimeMessage).event ?? (event as RealtimeEventInput).type;
+    switch (eventType) {
       case 'plan:updated': {
         const updated = extractRealtimePlan(event);
         if (updated && updated.id === currentId) {
@@ -188,12 +202,6 @@ export class PlanDetailComponent {
       }
 
       case 'plan:file-added': {
-        const updatedPlan = extractRealtimePlan(event);
-        if (updatedPlan && updatedPlan.id === currentId) {
-          this.fetchedPlan.update(prev => (prev ? { ...prev, ...updatedPlan } : updatedPlan));
-          this.notif.info('Se agregó un nuevo archivo adjunto al plan.');
-          return;
-        }
         const attachment = extractRealtimeAttachment(event);
         const targetPlanId = extractRealtimePlanId(event) || attachment?.planId;
         if (attachment && targetPlanId === currentId) {
@@ -204,13 +212,9 @@ export class PlanDetailComponent {
       }
 
       case 'plan:file-removed': {
-        const updatedPlan = extractRealtimePlan(event);
-        if (updatedPlan && updatedPlan.id === currentId) {
-          this.fetchedPlan.update(prev => (prev ? { ...prev, ...updatedPlan } : updatedPlan));
-          return;
-        }
-        const targetPlanId = extractRealtimePlanId(event);
-        const fileId = extractRealtimeFileId(event);
+        const attachment = extractRealtimeAttachment(event);
+        const targetPlanId = extractRealtimePlanId(event) || attachment?.planId;
+        const fileId = extractRealtimeFileId(event) || attachment?.id;
         if (targetPlanId === currentId && fileId) {
           this.removeAttachmentFromLocalFetchedPlan(fileId);
           if (this.attachmentPendingDeletion()?.id === fileId) {
@@ -266,6 +270,22 @@ export class PlanDetailComponent {
     }
   }
 
+  /** Carga la lista de archivos adjuntos del plan desde `GET /plans/:id/files`. */
+  async loadAttachments(planId: string): Promise<void> {
+    if (!planId) return;
+    this.isLoadingAttachments.set(true);
+    this.attachmentsError.set(null);
+    try {
+      const files = await firstValueFrom(this.filesApi.list(planId));
+      this.plans.setPlanAttachments(planId, files);
+      this.fetchedPlan.update(prev => (prev && prev.id === planId ? { ...prev, files } : prev));
+    } catch (error) {
+      this.attachmentsError.set(toApiError(error));
+    } finally {
+      this.isLoadingAttachments.set(false);
+    }
+  }
+
   /** Recarga la lista de archivos adjuntos del plan desde la API (B4). */
   async retryLoadAttachments(): Promise<void> {
     if (this.checkOfflineAndNotify('No hay conexión con el servidor. Conéctate para cargar los archivos adjuntos.')) {
@@ -273,20 +293,7 @@ export class PlanDetailComponent {
     }
     const currentPlan = this.plan();
     if (!currentPlan) return;
-
-    this.isLoadingAttachments.set(true);
-    this.attachmentsError.set(null);
-    try {
-      const files = await firstValueFrom(this.filesApi.list(currentPlan.id));
-      for (const file of files) {
-        this.plans.addAttachmentToPlan(currentPlan.id, file);
-        this.addAttachmentToLocalFetchedPlan(file);
-      }
-    } catch (error) {
-      this.attachmentsError.set(toApiError(error));
-    } finally {
-      this.isLoadingAttachments.set(false);
-    }
+    await this.loadAttachments(currentPlan.id);
   }
 
   // ── B3: Helpers de visualización, descarga y eliminación de archivos ──
@@ -342,36 +349,12 @@ export class PlanDetailComponent {
       const result = this.filesApi.download(attachment);
       if (isObservable(result)) {
         const blob = await firstValueFrom(result);
-        this.triggerBrowserDownload(blob, attachment.name);
+        saveBlob(blob, attachment.name);
         return;
-      }
-      // Fallback si download() en otra implementación abre directamente o devuelve URL
-      const url = this.resolveAttachmentUrl(attachment);
-      if (typeof window !== 'undefined' && url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
       }
     } catch (error) {
       const apiErr = toApiError(error);
       this.attachmentActionError.set(apiErr.message);
-    }
-  }
-
-  private triggerBrowserDownload(blob: Blob, filename: string): void {
-    if (typeof window === 'undefined' || typeof URL === 'undefined' || !URL.createObjectURL) {
-      return;
-    }
-    const objectUrl = URL.createObjectURL(blob);
-    try {
-      const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = filename || 'archivo';
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } finally {
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     }
   }
 
@@ -412,12 +395,6 @@ export class PlanDetailComponent {
       await firstValueFrom(this.filesApi.remove(currentPlan.id, target.id));
       this.plans.removeAttachmentFromPlan(currentPlan.id, target.id);
       this.removeAttachmentFromLocalFetchedPlan(target.id);
-      this.realtime.notifyOtherTabs?.({
-        type: 'plan:file-removed',
-        planId: currentPlan.id,
-        fileId: target.id,
-        payload: { planId: currentPlan.id, fileId: target.id },
-      });
       this.deleteAttachmentModal()?.close();
       this.attachmentPendingDeletion.set(null);
       this.notif.success(`Archivo "${target.name}" eliminado correctamente.`);
@@ -434,6 +411,15 @@ export class PlanDetailComponent {
           apiErr.message || 'Ocurrió un error al intentar eliminar el archivo adjunto.',
         );
       }
+    }
+  }
+
+  /** Callback de `<app-file-uploader (uploaded)="onFileUploaded($event)" />` (C4). */
+  onFileUploaded(attachment: PlanAttachment): void {
+    const currentPlan = this.plan();
+    if (currentPlan) {
+      this.plans.addAttachmentToPlan(currentPlan.id, attachment);
+      this.addAttachmentToLocalFetchedPlan(attachment);
     }
   }
 

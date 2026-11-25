@@ -23,7 +23,8 @@ import {
 } from '../../../../core/services/plan.service';
 import {
   ConnectionStatus,
-  RealtimeEvent,
+  RealtimeEventInput,
+  RealtimeMessage,
   RealtimeService,
 } from '../../../../core/services/realtime.service';
 import { CanManageDirective, HasRoleDirective } from '../../../../shared/directives/has-role.directive';
@@ -67,7 +68,7 @@ export class PlanListComponent {
   isLoading = signal<boolean>(false);
   hasError = signal<boolean>(false);
   errorMessage = signal<string>('');
-  readonly isOffline = computed(() => this.realtime.connectionStatus() === 'disconnected');
+  readonly isOffline = computed(() => this.realtime.isOffline?.() ?? this.realtime.connectionStatus() === 'disconnected');
 
   // ── Búsqueda con Debounce (B2) ──────────────────────────
   searchInputRaw = signal<string>('');
@@ -147,8 +148,9 @@ export class PlanListComponent {
       });
   }
 
-  private onRealtimeEvent(event: RealtimeEvent): void {
-    switch (event.type) {
+  private onRealtimeEvent(event: RealtimeMessage | RealtimeEventInput): void {
+    const eventType = (event as RealtimeMessage).event ?? (event as RealtimeEventInput).type;
+    switch (eventType) {
       case 'plan:created': {
         const created = extractRealtimePlan(event);
         if (created) {

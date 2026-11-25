@@ -3,9 +3,16 @@
  *  - requireAuth: exige un JWT válido (401 si falta, es inválido o expiró).
  *  - requireRole: exige uno de los roles indicados (403). Va después de requireAuth.
  *  - plansAccess: regla de dueño para /plans (ownerId).
+ *  - verifyToken: valida un JWT y devuelve { id, role } (lo comparten HTTP y WebSocket).
  */
 const jwt = require('jsonwebtoken');
 const { jwtSecret } = require('./config.cjs');
+
+/** Valida firma y expiración. Devuelve { id, role, exp } o lanza el error de jsonwebtoken. */
+function verifyToken(token) {
+  const payload = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
+  return { id: payload.sub, role: payload.role, exp: payload.exp };
+}
 
 function requireAuth(req, res, next) {
   const [scheme, token] = (req.headers.authorization || '').split(' ');
@@ -13,8 +20,8 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ message: 'Falta el token de autenticación.' });
   }
   try {
-    const payload = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
-    req.user = { id: payload.sub, role: payload.role };
+    const { id, role } = verifyToken(token);
+    req.user = { id, role };
     next();
   } catch (error) {
     const message = error.name === 'TokenExpiredError' ? 'El token expiró.' : 'El token no es válido.';
@@ -68,4 +75,4 @@ function plansAccess(db) {
   };
 }
 
-module.exports = { requireAuth, requireRole, plansAccess };
+module.exports = { requireAuth, requireRole, plansAccess, verifyToken };

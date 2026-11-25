@@ -39,16 +39,6 @@ export interface MacroGoals {
   calories: number;  // kcal
 }
 
-export interface PlanAttachment {
-  id: string;
-  planId: string;
-  name: string;
-  mimeType: string;
-  size: number;
-  url: string;
-  createdAt: string;
-}
-
 export interface NutritionPlan {
   id: string;
   name: string;
@@ -130,3 +120,38 @@ export interface PlanItem {
   ingredientId: string;
   grams: number;
 }
+
+export interface PlanAttachment {
+  id: string;
+  planId: string;
+  name: string;
+  mimeType: string;
+  size: number;        // bytes
+  url: string;
+  createdAt: string;   // ISO 8601
+}
+
+// ── Eventos en tiempo real (WebSocket) ───────────────────────
+/** Estado del canal WebSocket. Mientras se abre o se reintenta, vale `'reconnecting'`. */
+export type ConnectionStatus = 'connected' | 'reconnecting' | 'disconnected';
+
+/** Nombre del evento → carga útil que envía el servidor. */
+export interface RealtimeEventMap {
+  'plan:created': NutritionPlan;
+  'plan:updated': NutritionPlan;
+  'plan:deleted': { id: string };
+  'plan:file-added': PlanAttachment;
+  'plan:file-removed': PlanAttachment;
+}
+
+export type RealtimeEventName = keyof RealtimeEventMap;
+
+/** Mensaje del canal: `{ event, data, actorId, at }`. `actorId` es quien provocó el cambio. */
+export type RealtimeMessage = {
+  [E in RealtimeEventName]: {
+    event: E;
+    data: RealtimeEventMap[E];
+    actorId: string | null;
+    at: string; // ISO 8601
+  };
+}[RealtimeEventName];

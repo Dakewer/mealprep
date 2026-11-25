@@ -1,70 +1,91 @@
-import { HttpClient, HttpContext, HttpEvent } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpEventType } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, filter, map } from 'rxjs';
 import { API_BASE_URL } from '../config/api-base-url.token';
 import { SILENT_ERRORS } from '../interceptors/http-error.interceptor';
 import { PlanAttachment } from '../models/app.models';
 import { RequestOptions } from './plans-api.service';
 
+/** Lo que emite `upload()`: el avance de la subida y, al final, el adjunto creado. */
+export type UploadEvent =
+  | { type: 'progress'; loaded: number; total: number | null; percent: number | null }
+  | { type: 'done'; attachment: PlanAttachment };
+
 /**
- * Capa HTTP para los archivos adjuntos de un plan (`/plans/:id/files`).
- * Pasa por `authInterceptor` y `httpErrorInterceptor`.
+ * Capa HTTP de los archivos adjuntos de un plan (`/plans/:id/files`).
+ * Pasa por `authInterceptor` (token) y `httpErrorInterceptor` (errores como `ApiError`),
+ * igual que `PlansApiService`.
+ *
+ * Los permisos los decide el servidor (regla de dueño): `403` si el plan es de otro usuario.
  */
 @Injectable({ providedIn: 'root' })
 export class FilesApiService {
-  private readonly http    = inject(HttpClient);
-  private readonly baseUrl = inject(API_BASE_URL);
+  private http    = inject(HttpClient);
+  private baseUrl = inject(API_BASE_URL);
 
-  private filesUrl(planId: string): string {
-    return `${this.baseUrl}/plans/${encodeURIComponent(planId)}/files`;
-  }
-
-  /** Lista los archivos adjuntos de un plan (`GET /plans/:id/files`). */
+  /** Adjuntos de un plan. Por defecto no avisa si falla (la vista pinta su estado de error). */
   list(planId: string, options: RequestOptions = {}): Observable<PlanAttachment[]> {
-    return this.http
-      .get<unknown[]>(this.filesUrl(planId), {
-        context: this.context(options.notify ?? false),
-      })
-      .pipe(map(items => (Array.isArray(items) ? items.map(item => toAttachment(item, planId)) : [])));
-  }
-
-  /**
-   * Sube un archivo adjunto al plan (`POST /plans/:id/files`) emitiendo eventos
-   * de progreso (`reportProgress: true`, `observe: 'events'`).
-   */
-  upload(planId: string, file: File, options: RequestOptions = {}): Observable<HttpEvent<PlanAttachment>> {
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-
-    return this.http.post<PlanAttachment>(this.filesUrl(planId), formData, {
-      reportProgress: true,
-      observe: 'events',
-      context: this.context(options.notify ?? true),
+    return this.http.get<PlanAttachment[]>(this.filesUrl(planId), {
+      context: this.context(options.notify ?? false),
     });
   }
 
-  /** Descarga el contenido binario del archivo pasando por los interceptores de auth y error. */
+  /**
+   * Sube un archivo (`POST /plans/:id/files`, multipart, campo `file`).
+   * Emite eventos `progress` mientras sube y un único `done` con el adjunto al terminar.
+   * Un error (413 tamaño, 415 tipo, 409 máximo por plan, 403 dueño) llega como `ApiError`.
+   */
+  upload(planId: string, file: File, options: RequestOptions = {}): Observable<UploadEvent> {
+    const body = new FormData();
+    body.append('file', file, file.name);
+
+    return this.http
+      .post<PlanAttachment>(this.filesUrl(planId), body, {
+        reportProgress: true,
+        observe: 'events',
+        context: this.context(options.notify ?? true),
+      })
+      .pipe(
+        filter(event => event.type === HttpEventType.UploadProgress || event.type === HttpEventType.Response),
+        map((event): UploadEvent => {
+          if (event.type === HttpEventType.Response) {
+            return { type: 'done', attachment: event.body as PlanAttachment };
+          }
+          const total = event.total ?? null;
+          return {
+            type: 'progress',
+            loaded: event.loaded,
+            total,
+            percent: total ? Math.round((event.loaded / total) * 100) : null,
+          };
+        }),
+      );
+  }
+
+  /**
+   * Descarga el contenido del adjunto como `Blob`. La petición lleva el token (un enlace `<a href>`
+   * no podría), por eso se pide con HttpClient; usa `saveBlob()` para entregarlo al navegador.
+   * La URL se arma desde `apiBaseUrl`, no desde `attachment.url`, para no mandar el token a otro host.
+   */
   download(attachment: PlanAttachment, options: RequestOptions = {}): Observable<Blob> {
-    return this.http.get(this.resolveUrl(attachment), {
+    return this.http.get(this.fileUrl(attachment.planId, attachment.id), {
       responseType: 'blob',
       context: this.context(options.notify ?? true),
     });
   }
 
-  /** Elimina un archivo adjunto del plan (`DELETE /plans/:id/files/:fileId`). */
+  /** Elimina un adjunto (`DELETE /plans/:id/files/:fileId`). */
   remove(planId: string, fileId: string, options: RequestOptions = {}): Observable<void> {
     return this.http
-      .delete<unknown>(`${this.filesUrl(planId)}/${encodeURIComponent(fileId)}`, {
-        context: this.context(options.notify ?? true),
-      })
+      .delete<unknown>(this.fileUrl(planId, fileId), { context: this.context(options.notify ?? true) })
       .pipe(map(() => undefined));
   }
 
-  /** Resuelve la URL absoluta del archivo adjunto para visualización o descarga. */
+  /** Resuelve la URL absoluta del archivo adjunto para visualización. */
   resolveUrl(attachment: PlanAttachment): string {
     const rawUrl = attachment.url ?? '';
     if (!rawUrl) {
-      return `${this.filesUrl(attachment.planId)}/${encodeURIComponent(attachment.id)}`;
+      return this.fileUrl(attachment.planId, attachment.id);
     }
     if (
       rawUrl.startsWith('http://') ||
@@ -77,9 +98,30 @@ export class FilesApiService {
     return `${this.baseUrl}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
   }
 
+  // ── Helpers ───────────────────────────────────────────────
+
+  private filesUrl(planId: string): string {
+    return `${this.baseUrl}/plans/${encodeURIComponent(planId)}/files`;
+  }
+
+  private fileUrl(planId: string, fileId: string): string {
+    return `${this.filesUrl(planId)}/${encodeURIComponent(fileId)}`;
+  }
+
   private context(notify: boolean): HttpContext {
     return new HttpContext().set(SILENT_ERRORS, !notify);
   }
+}
+
+/** Entrega un `Blob` al usuario como descarga con el nombre indicado. */
+export function saveBlob(blob: Blob, filename: string): void {
+  if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL?.(url);
 }
 
 export function toAttachment(raw: unknown, fallbackPlanId = ''): PlanAttachment {
