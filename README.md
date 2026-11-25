@@ -6,7 +6,7 @@ Aplicación web para planificar comidas: calcula tu TDEE y tus metas de macros, 
 
 | Integrante (GitHub) | Bloque de trabajo |
 |---|---|
-| [@Dakewer](https://github.com/Dakewer) | Datos, errores, documentación, backend y autenticación |
+| [@Dakewer](https://github.com/Dakewer) | Datos, errores, documentación, backend, autenticación, archivos adjuntos y tiempo real |
 | [@Frijol75](https://github.com/Frijol75) | Lista, búsqueda, paginación, detalle y estados de interfaz |
 | [@LuisCacho-py](https://github.com/LuisCacho-py) | Formularios (alta, edición, login/registro), directivas de permisos (`*appHasRole`, `*appCanManage`) y manejo de 403 |
 
@@ -50,6 +50,8 @@ Los retrasos artificiales para ver los estados de carga se configuran con la var
 - **Autenticación JWT**: `POST /auth/register`, `POST /auth/login` y `GET /auth/me`.
 - **Contraseñas con bcrypt** (`bcryptjs`, el mismo algoritmo que `bcrypt` pero sin compilar código nativo, que da problemas en Windows).
 - **Autorización por rol y por dueño** en `/plans` (ver sección 4).
+- **Archivos adjuntos** de los planes (`/plans/:id/files`) con `multer`, guardados en `api/uploads/` (ver sección 2.5).
+- **Canal WebSocket** (`ws`) en el mismo puerto, que avisa de los cambios en los planes (ver sección 2.6).
 - **Restricción de escritura sobre `/users`**: solo se permite `GET /users` para administradores; el resto de métodos y `/db` devuelven 404.
 
 json-server sigue atendiendo únicamente `/plans` y se monta como middleware. Los datos de ejemplo están en `api/db.seed.json` (12 planes y 2 usuarios de prueba).
@@ -64,7 +66,7 @@ json-server sigue atendiendo únicamente `/plans` y se monta como middleware. Lo
 
 - No valida los datos de los planes: acepta cualquier cuerpo. Las validaciones viven en los formularios del frontend; con una API real, el servidor debe repetirlas. La autenticación sí valida el formato de correo, nombre y contraseña.
 - Los datos viven en un archivo local, y no se puede desplegar tal cual en un hosting estático.
-- Solo los **planes** y la **autenticación** usan la API. El perfil del usuario y las listas de compras siguen guardándose en `localStorage`, por usuario.
+- Solo los **planes**, los **archivos adjuntos**, el **tiempo real** y la **autenticación** usan la API. El perfil del usuario y las listas de compras siguen guardándose en `localStorage`, por usuario.
 - No hay refresh token ni revocación de tokens: cuando un JWT expira, hay que volver a iniciar sesión. Ver limitaciones en la sección 4.7.
 
 **Cómo se reemplaza por una API real.** El resto de la app no conoce json-server; solo conoce el contrato de la sección 2.
@@ -206,6 +208,73 @@ El interceptor decide el mensaje según el código de estado, así que también 
 | `409` | Conflicto | Aviso con el mensaje del servidor, o “Ya existe un registro con esos datos.”. |
 | `5xx` | Fallo del servidor | Aviso “El servidor tuvo un problema. Inténtalo de nuevo en unos minutos.”. |
 
+### 2.5 Archivos adjuntos de un plan
+
+**Fuentes elegidas y por qué.**
+
+| Necesidad | Elección | Justificación |
+|---|---|---|
+| Recibir archivos | [`multer`](https://github.com/expressjs/multer) | Es el middleware estándar de Express para `multipart/form-data`. Escribe el archivo en disco sin cargarlo entero en memoria y permite fijar tamaño máximo y filtrar el tipo antes de guardar. |
+| Dónde guardarlos | Contenido en `api/uploads/` con nombre aleatorio (`<uuid>.bin`); metadatos en la colección `files` de `db.json` | El nombre que manda el cliente nunca se usa como ruta en disco (evita *path traversal*). Los metadatos van **separados del plan**, así un `PUT /plans/:id` no borra los adjuntos. `api/uploads/` está en `.gitignore` y se limpia con `npm run api:reset`. |
+| Validar el tipo | Lista permitida (JPG, PNG, WebP, PDF) **más** revisión de los primeros bytes del archivo | El `Content-Type` lo declara el cliente y se puede falsificar; la firma del contenido no. |
+| Subida con avance en el cliente | `HttpClient` con `reportProgress: true` y `observe: 'events'` | Está en Angular: no hace falta otra librería, y la subida pasa por los mismos interceptores (token y errores) que el resto de la API. |
+
+Límites: **5 MB** por archivo (configurable con `FILES_MAX_MB`) y **10 archivos** por plan.
+
+**Endpoints.** Todos exigen `Authorization: Bearer <token>` y aplican la regla de dueño: un `user` solo opera sobre archivos de **sus** planes; un `admin`, sobre los de todos.
+
+| Método y ruta | Qué hace | Respuestas |
+|---|---|---|
+| `GET /plans/:id/files` | Lista los adjuntos del plan. | `200` con `PlanAttachment[]` (y `X-Total-Count`); `403` si el plan es de otro usuario; `404` si el plan no existe. |
+| `POST /plans/:id/files` | Sube un archivo (`multipart/form-data`, campo `file`). El servidor fija `id`, `url` y `createdAt`. | `201` con el `PlanAttachment`; `400` si falta el archivo o se envía más de uno; `403` si el plan no es tuyo (salvo admin); `404` si el plan no existe; `409` si el plan ya tiene 10 archivos; `413` si pesa más del máximo; `415` si el tipo no está permitido o el contenido no coincide con su tipo. |
+| `GET /plans/:id/files/:fileId` | Descarga el contenido (`Content-Disposition: attachment`). | `200` con el archivo; `403`; `404`. |
+| `DELETE /plans/:id/files/:fileId` | Elimina el adjunto (base y disco). | `200` con `{}`; `403` si el plan no es tuyo (salvo admin); `404`. |
+
+Al eliminar un plan se borran también sus adjuntos. Los errores usan el formato de la sección 2.4.
+
+`PlanAttachment`:
+
+```json
+{
+  "id": "file-3f1c…",
+  "planId": "plan-001",
+  "name": "receta.pdf",
+  "mimeType": "application/pdf",
+  "size": 48213,
+  "url": "http://localhost:3000/plans/plan-001/files/file-3f1c…",
+  "createdAt": "2026-11-23T18:00:00.000Z"
+}
+```
+
+> `url` identifica el recurso, pero **no** es un enlace público: pide el token. Por eso el cliente descarga con `HttpClient` (`FilesApiService.download()` devuelve un `Blob`) en lugar de poner `url` en un `<a href>`.
+
+### 2.6 Canal WebSocket (tiempo real)
+
+Servidor: librería [`ws`](https://github.com/websockets/ws) montada sobre el mismo servidor HTTP de Express (`api/realtime.cjs`), así que comparte el puerto (`ws://localhost:3000`). Se eligió `ws` frente a Socket.IO porque el navegador ya trae `WebSocket` nativo: no hace falta librería en el cliente y el protocolo es solo JSON sobre el estándar.
+
+**Conexión y seguridad.**
+
+- El cliente conecta a `ws://localhost:3000/?token=<JWT>`. Los navegadores no pueden poner la cabecera `Authorization` en un WebSocket, por eso el token viaja en la URL de conexión (en producción debe ser `wss://`, para que no se vea en claro).
+- Sin token, con token inválido o vencido: el servidor rechaza el *upgrade* con `401`. Desde un origen que no esté en `CORS_ORIGIN`: `403`. El canal nunca llega a abrirse.
+- **Regla de dueño**: un evento sobre un plan solo lo reciben su dueño y los `admin`.
+- El canal es de **solo lectura**: lo que envíe el cliente se ignora; las escrituras van por HTTP.
+- Cuando vence el JWT, el servidor cierra el canal con el código `4401` y el cliente no reintenta.
+- Cada 30 s el servidor hace *ping* y elimina las conexiones muertas.
+
+**Formato del mensaje** (siempre JSON): `{ "event": "plan:updated", "data": { … }, "actorId": "usr-002", "at": "2026-11-23T18:00:00.000Z" }`. `actorId` es quien provocó el cambio; sirve para no tratar como ajeno un cambio propio.
+
+**Eventos.**
+
+| Evento | Payload (`data`) | Quién lo emite | Quién lo recibe |
+|---|---|---|---|
+| `plan:created` | `NutritionPlan` | El servidor, tras un `POST /plans` exitoso | Dueño del plan y admins |
+| `plan:updated` | `NutritionPlan` | El servidor, tras un `PUT` o `PATCH /plans/:id` exitoso | Dueño del plan y admins |
+| `plan:deleted` | `{ "id": string }` | El servidor, tras un `DELETE /plans/:id` exitoso | Dueño del plan y admins |
+| `plan:file-added` | `PlanAttachment` | El servidor, tras un `POST /plans/:id/files` exitoso | Dueño del plan y admins |
+| `plan:file-removed` | `PlanAttachment` (el eliminado) | El servidor, tras un `DELETE /plans/:id/files/:fileId` exitoso | Dueño del plan y admins |
+
+En todos los casos el **cliente solo recibe** (`RealtimeService`); nunca emite. No se envía nada cuando la operación falla (`4xx`).
+
 ## 3. Arquitectura de la capa de datos
 
 ```
@@ -219,10 +288,20 @@ Componente  →  PlanService  →  PlansApiService  →  HttpClient  →  API
 | URL base | `src/environments/*.ts` y `core/config/api-base-url.token.ts` | La URL sale del entorno. `environment.ts` es producción; `environment.development.ts` lo reemplaza en `ng serve` y `ng build --configuration development`. |
 | `PlansApiService` | `core/services/plans-api.service.ts` | Única pieza que arma peticiones HTTP de planes. Los componentes nunca usan `HttpClient`. |
 | `PlanService` | `core/services/plan.service.ts` | Estado de los planes en señales (`plans`, `plansStatus`, `plansError`, `plansLoading`) y operaciones de crear, editar, favorito y eliminar. Al cambiar de usuario, vacía los planes del anterior y recarga. |
+| `FilesApiService` | `core/services/files-api.service.ts` | Capa HTTP de los adjuntos: `list`, `upload` (multipart con `reportProgress`, emite `progress` y `done`), `download` (devuelve un `Blob`) y `remove`. Pasa por `authInterceptor` y `httpErrorInterceptor`. `saveBlob()` entrega el `Blob` como descarga. |
+| `RealtimeService` | `core/services/realtime.service.ts` | **Una sola** conexión WebSocket para toda la app (`providedIn: 'root'`). Un `effect` sobre `AuthService.token()` la abre al iniciar sesión (enviando el JWT) y la cierra al hacer `logout()`. Expone `connectionStatus`, `events$` y `on(...)`. |
 | `AuthService` | `core/services/auth.service.ts` | Estado de sesión en señales (`token`, `currentUser`, `status`, `error`, `logoutReason`, `isAuthenticated`). Login, registro, logout, `checkSession()` y `restoreSession()`. |
 | `ApiError` | `core/errors/api-error.ts` | Error tipado y normalizado: `status`, `message`, `fieldErrors`. |
 | `authInterceptor` | `core/interceptors/auth.interceptor.ts` | Añade `Authorization: Bearer <token>` a las peticiones hacia la API. No toca peticiones externas ni las que ya traen `Authorization`. |
 | `httpErrorInterceptor` | `core/interceptors/http-error.interceptor.ts` | **Único lugar** donde se manejan los errores HTTP: los convierte en `ApiError`, gestiona 401 (cierra sesión y redirige) y 403, y avisa al usuario con un toast. Vuelve a lanzarlos. |
+
+Cómo usar el tiempo real y los archivos:
+
+- **Estado de la conexión**: `RealtimeService.connectionStatus()` vale `'connected'`, `'reconnecting'` (abriendo la conexión o reintentando) o `'disconnected'` (sin sesión, o el servidor cerró con `4401`).
+- **Reconexión automática**: si la conexión se cae y la sesión sigue vigente, reintenta con *backoff* exponencial: 1 s, 2 s, 4 s… hasta 30 s (con un poco de azar para que los clientes no reconecten a la vez). Al conectar, el contador se reinicia. Si el token ya no sirve, no reintenta.
+- **Escuchar eventos**: `realtime.on('plan:updated', 'plan:deleted').subscribe(msg => …)` (o `events$` para todos). `msg.data` está tipado según el evento (`RealtimeEventMap` en `app.models.ts`).
+- **Subir un archivo**: `filesApi.upload(planId, file).subscribe(e => e.type === 'progress' ? e.percent : e.attachment)`.
+- **URL del canal**: sale de `environment.wsUrl` (token `WS_URL`), igual que `apiBaseUrl`. En desarrollo es `ws://localhost:3000`, el valor de `WS_URL` en `.env.example`.
 
 Cómo usar la capa de datos:
 
@@ -274,6 +353,8 @@ El secreto está en `JWT_SECRET` (`.env`, no versionado) y debe tener al menos 1
 | `PORT` | No (`3000` por defecto) | `3000` | Puerto del servidor Express. |
 | `CORS_ORIGIN` | No (`http://localhost:4200`) | `http://localhost:4200` | Orígenes permitidos, separados por coma. |
 | `API_DELAY_MS` | No (`0` por defecto) | `800` | Retraso artificial para ver los estados de carga. |
+| `FILES_MAX_MB` | No (`5` por defecto) | `5` | Tamaño máximo de cada archivo adjunto, en MB. |
+| `WS_URL` | No (referencia para el front) | `ws://localhost:3000` | URL del canal WebSocket. La **usa el front** (`wsUrl` en `src/environments/*.ts`); el servidor comparte el puerto de `PORT` y no la lee. Si cambias `PORT`, actualiza también `wsUrl`. |
 
 ### 4.5 Roles y permisos
 
@@ -344,6 +425,8 @@ Definidas en `src/app/shared/directives/has-role.directive.ts` (standalone):
 
 Entornos y URL base, json-server con datos de ejemplo, `PlansApiService`, `ApiError`, interceptor global, servidor Express con JWT y bcrypt, regla de dueño, `AuthService` con señales, `authInterceptor` y este README. Ver secciones 1 a 4.
 
+**Archivos y tiempo real (`feature/archivos-realtime-capa`)**: endpoints de archivos con regla de dueño (`api/files.cjs`), canal WebSocket autenticado con JWT (`api/realtime.cjs`), `PlanAttachment`, `FilesApiService` y `RealtimeService`. Ver secciones 2.5, 2.6 y 3. Pruebas unitarias en `files-api.service.spec.ts` y `realtime.service.spec.ts`.
+
 ### Lista con búsqueda y paginación, detalle y estados de interfaz (@Frijol75)
 
 _Pendiente. Aquí se documentarán la lista, la ruta de detalle, el modal de confirmación al eliminar y los componentes de carga, error y vacío._
@@ -375,10 +458,10 @@ _Pendiente. Aquí se documentarán la lista, la ruta de detalle, el modal de con
 ## 6. Flujo de trabajo del equipo
 
 - Nadie hace push a `main`: cada funcionalidad va en su propia rama y llega por Pull Request.
-- Ramas: `feature/auth-api-capa` (Dakewer, esta entrega), `feature/lista-detalle` (Frijol75) y `feature/formularios` (LuisCacho-py). Para trabajo adicional, `feature/<tema>`.
+- Ramas: `feature/auth-api-capa` (Dakewer), `feature/archivos-realtime-capa` (Dakewer, archivos y tiempo real), `feature/lista-detalle` (Frijol75) y `feature/formularios` (LuisCacho-py). Para trabajo adicional, `feature/<tema>`.
 - Cada PR lo revisa **otro** integrante, con esta rotación: los PRs de Dakewer los revisa Frijol75, los de Frijol75 los revisa LuisCacho-py y los de LuisCacho-py los revisa Dakewer. Se necesita al menos una aprobación para mergear.
 - Los commits siguen el formato `tipo(ámbito): descripción` en español (`feat`, `fix`, `docs`, `test`, `chore`). Preferimos un commit por fase para que la revisión se pueda hacer commit por commit.
-- Antes de abrir un PR: `npm test -- --watch=false` y `npm run build` deben pasar (59 pruebas en esta entrega). Trae `main` a tu rama (`git merge origin/main`) para resolver conflictos antes de la revisión.
+- Antes de abrir un PR: `npm test -- --watch=false` y `npm run build` deben pasar (114 pruebas en esta entrega). Trae `main` a tu rama (`git merge origin/main`) para resolver conflictos antes de la revisión.
 - Punto de conflicto frecuente: `app.routes.ts`. Los cambios en `app.models.ts`, `auth.service.ts`, `plan.service.ts` y `dashboard.component.ts` se coordinan con Dakewer.
 - **Orden de fusión**: los PR #6 (`feature/formularios`) y #7 (`feature/guards-vistas`) chocan entre sí en `app.routes.ts`, `auth.service.ts` y `dashboard.component.ts`. Este PR (`feature/auth-api-capa`) sale de `main` y no depende de ellos, pero reescribe `auth.service.ts`, así que debe fusionarse **antes** que #6 y #7 para que la resolución de conflictos sea en un solo sentido.
 
@@ -386,16 +469,17 @@ _Pendiente. Aquí se documentarán la lista, la ruta de detalle, el modal de con
 
 ```
 api/                      Servidor Express + json-server: db.seed.json (versionado), db.json (local, ignorado),
-                          config.cjs, auth.cjs, middleware.cjs, server.cjs, prepare-db.cjs
-src/environments/         URL base de la API por entorno
+                          config.cjs, auth.cjs, middleware.cjs, files.cjs, realtime.cjs, server.cjs, prepare-db.cjs,
+                          uploads/ (adjuntos, local, ignorado)
+src/environments/         URL base de la API y del WebSocket por entorno
 src/app/core/
-  config/                 token API_BASE_URL
+  config/                 tokens API_BASE_URL y WS_URL
   data/                   catálogo de ingredientes
   errors/                 ApiError y toApiError
   guards/                 authGuard, guestGuard, roleGuard y unsavedChangesGuard
   interceptors/           authInterceptor y httpErrorInterceptor
   models/                 interfaces tipadas
-  services/               Auth, Notification, Nutrition, Plan, PlansApi y UsersApi
+  services/               Auth, FilesApi, Notification, Nutrition, Plan, PlansApi, Realtime y UsersApi
   testing/                fake-jwt.ts (helper de pruebas)
   validators/             validadores personalizados de planes
 src/app/features/         landing, páginas públicas, auth y dashboard
