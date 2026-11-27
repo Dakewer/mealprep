@@ -1,17 +1,32 @@
 import {
   Component,
+  DestroyRef,
   computed,
+  effect,
   inject,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { NutritionPlan } from '../../../../core/models/app.models';
+import { NutritionPlan, PlanAttachment } from '../../../../core/models/app.models';
 import { AuthService } from '../../../../core/services/auth.service';
+import { FilesApiService } from '../../../../core/services/files-api.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { PlanService } from '../../../../core/services/plan.service';
+import {
+  PlanService,
+  extractRealtimePlan,
+  extractRealtimePlanId,
+} from '../../../../core/services/plan.service';
+import {
+  ConnectionStatus,
+  RealtimeEventInput,
+  RealtimeMessage,
+  RealtimeService,
+} from '../../../../core/services/realtime.service';
 import { CanManageDirective, HasRoleDirective } from '../../../../shared/directives/has-role.directive';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
@@ -37,8 +52,11 @@ import { LoadingStateComponent } from '../../../../shared/components/loading-sta
   styleUrl: './plan-list.component.css',
 })
 export class PlanListComponent {
-  private notif = inject(NotificationService);
+  private notif       = inject(NotificationService);
   private authService = inject(AuthService);
+  private filesApi    = inject(FilesApiService);
+  private realtime    = inject(RealtimeService);
+  private destroyRef  = inject(DestroyRef);
   plans = inject(PlanService);
 
   /** Se emite tras generar una lista de compras, para que el dashboard cambie de pestaña. */
@@ -46,10 +64,11 @@ export class PlanListComponent {
   /** Se emite cuando el usuario quiere crear su primer plan. */
   createRequested = output<void>();
 
-  // ── Estados de UI (B1) ──────────────────────────────────
+  // ── Estados de UI (B1 / B4) ─────────────────────────────
   isLoading = signal<boolean>(false);
   hasError = signal<boolean>(false);
   errorMessage = signal<string>('');
+  readonly isOffline = computed(() => this.realtime.isOffline?.() ?? this.realtime.connectionStatus() === 'disconnected');
 
   // ── Búsqueda con Debounce (B2) ──────────────────────────
   searchInputRaw = signal<string>('');
@@ -98,14 +117,97 @@ export class PlanListComponent {
     return Array.from({ length: this.totalPages() }, (_, i) => i + 1);
   });
 
+  private previousConnectionStatus: ConnectionStatus = this.realtime.connectionStatus();
+
+  constructor() {
+    // B2: Limpieza de timer de búsqueda al destruir el componente
+    this.destroyRef.onDestroy(() => {
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer);
+      }
+    });
+
+    // B2: Al pasar de 'reconnecting' a 'connected', limpiar estado de error local y resincronizar
+    effect(() => {
+      const status = this.realtime.connectionStatus();
+      const wasReconnecting = this.previousConnectionStatus === 'reconnecting';
+      this.previousConnectionStatus = status;
+
+      if (wasReconnecting && status === 'connected') {
+        untracked(() => {
+          this.hasError.set(false);
+        });
+      }
+    });
+
+    // B2: Suscripción a eventos de RealtimeService con limpieza obligatoria takeUntilDestroyed
+    this.realtime.events$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(event => {
+        this.onRealtimeEvent(event);
+      });
+  }
+
+  private onRealtimeEvent(event: RealtimeMessage | RealtimeEventInput): void {
+    const eventType = (event as RealtimeMessage).event ?? (event as RealtimeEventInput).type;
+    switch (eventType) {
+      case 'plan:created': {
+        const created = extractRealtimePlan(event);
+        if (created) {
+          this.notif.info(`Nuevo plan disponible: "${created.name}".`);
+        }
+        break;
+      }
+
+      case 'plan:updated': {
+        const updated = extractRealtimePlan(event);
+        if (updated) {
+          this.notif.info(`El plan "${updated.name}" se actualizó en tiempo real.`);
+        }
+        break;
+      }
+
+      case 'plan:deleted': {
+        const deletedId = extractRealtimePlanId(event);
+        if (deletedId && this.planPendingDeletion()?.id === deletedId) {
+          this.confirmModal().close();
+          this.planPendingDeletion.set(null);
+        }
+        if (this.currentPage() > this.totalPages()) {
+          this.currentPage.set(this.totalPages());
+        }
+        break;
+      }
+
+      case 'plan:file-added':
+      case 'plan:file-removed':
+        // PlanService actualiza los archivos del plan y la miniatura de portada se refresca sola
+        break;
+    }
+  }
+
   ingredientName(id: string): string {
     return this.plans.ingredients.find(i => i.id === id)?.name ?? id;
   }
 
   /** Indica si el plan pertenece a una cuenta distinta a la del usuario autenticado. */
   isOtherUserPlan(plan: NutritionPlan): boolean {
-    const currentId = this.authService.currentUser()?.id;
+    const currentId = this.authService.currentUser?.()?.id;
     return Boolean(plan.ownerId && currentId && plan.ownerId !== currentId);
+  }
+
+  // ── B3: Miniatura de portada si el plan tiene imagen ────
+  getCoverImage(plan: NutritionPlan): PlanAttachment | null {
+    const attachments = this.plans.getPlanAttachments(plan);
+    return attachments.find(att => att.mimeType?.startsWith('image/')) ?? null;
+  }
+
+  resolveAttachmentUrl(attachment: PlanAttachment): string {
+    return this.filesApi.resolveUrl(attachment);
+  }
+
+  attachmentsCount(plan: NutritionPlan): number {
+    return this.plans.getPlanAttachments(plan).length;
   }
 
   // ── Manejo de Búsqueda ──────────────────────────────────
@@ -162,11 +264,19 @@ export class PlanListComponent {
   }
 
   async toggleFavorite(planId: string): Promise<void> {
+    if (this.isOffline()) {
+      this.notif.warning('No hay conexión con el servidor. Verifica tu conexión para modificar favoritos.');
+      return;
+    }
     await this.plans.toggleFavorite(planId);
   }
 
   // ── Eliminación Accesible con Modal (B4) ──────────────────
   requestDelete(plan: NutritionPlan): void {
+    if (this.isOffline()) {
+      this.notif.warning('No hay conexión con el servidor. No puedes eliminar planes sin conexión.');
+      return;
+    }
     this.planPendingDeletion.set({ id: plan.id, name: plan.name });
     this.confirmModal().open(plan.name);
   }
@@ -178,6 +288,13 @@ export class PlanListComponent {
   async onDeleteConfirmed(): Promise<void> {
     const target = this.planPendingDeletion();
     if (!target) return;
+
+    if (this.isOffline()) {
+      this.confirmModal().close();
+      this.planPendingDeletion.set(null);
+      this.notif.warning('No hay conexión con el servidor. No se pudo eliminar el plan.');
+      return;
+    }
 
     const currentPageSnapshot = this.currentPage();
     this.isLoading.set(true);
@@ -218,6 +335,10 @@ export class PlanListComponent {
   }
 
   async retryLoad(): Promise<void> {
+    if (this.isOffline()) {
+      this.notif.warning('Sigues sin conexión. Conéctate para volver a cargar tus planes.');
+      return;
+    }
     this.hasError.set(false);
     this.isLoading.set(true);
     await this.plans.loadPlans();

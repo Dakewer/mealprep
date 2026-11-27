@@ -81,6 +81,23 @@ export class FilesApiService {
       .pipe(map(() => undefined));
   }
 
+  /** Resuelve la URL absoluta del archivo adjunto para visualización. */
+  resolveUrl(attachment: PlanAttachment): string {
+    const rawUrl = attachment.url ?? '';
+    if (!rawUrl) {
+      return this.fileUrl(attachment.planId, attachment.id);
+    }
+    if (
+      rawUrl.startsWith('http://') ||
+      rawUrl.startsWith('https://') ||
+      rawUrl.startsWith('blob:') ||
+      rawUrl.startsWith('data:')
+    ) {
+      return rawUrl;
+    }
+    return `${this.baseUrl}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+  }
+
   // ── Helpers ───────────────────────────────────────────────
 
   private filesUrl(planId: string): string {
@@ -98,10 +115,24 @@ export class FilesApiService {
 
 /** Entrega un `Blob` al usuario como descarga con el nombre indicado. */
 export function saveBlob(blob: Blob, filename: string): void {
+  if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return;
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
   link.click();
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL?.(url);
+}
+
+export function toAttachment(raw: unknown, fallbackPlanId = ''): PlanAttachment {
+  const r = (raw ?? {}) as Partial<PlanAttachment> & { id?: string | number; planId?: string | number };
+  return {
+    id: String(r.id ?? ''),
+    planId: String(r.planId ?? fallbackPlanId),
+    name: r.name ?? 'archivo',
+    mimeType: r.mimeType ?? 'application/octet-stream',
+    size: typeof r.size === 'number' && Number.isFinite(r.size) ? r.size : 0,
+    url: r.url ?? '',
+    createdAt: r.createdAt ?? new Date(0).toISOString(),
+  };
 }

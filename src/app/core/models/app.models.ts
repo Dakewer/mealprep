@@ -50,6 +50,9 @@ export interface NutritionPlan {
   tags: string[];
   /** Id del usuario dueño del plan. Lo fija el servidor al crear; el cliente no lo envía. */
   ownerId?: string;
+  /** Archivos adjuntos del plan (imágenes JPG/PNG/WEBP o PDF). */
+  files?: PlanAttachment[];
+  attachments?: PlanAttachment[];
 }
 
 /** Cuerpo que se envía a la API para crear (POST) o reemplazar (PUT) un plan. `id` y `ownerId` los asigna el servidor. */

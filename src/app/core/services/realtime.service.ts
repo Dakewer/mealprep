@@ -1,12 +1,34 @@
-import { DestroyRef, InjectionToken, Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { DestroyRef, InjectionToken, Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Observable, Subject, filter } from 'rxjs';
 import { WS_URL } from '../config/ws-url.token';
 import {
   ConnectionStatus,
+  NutritionPlan,
+  PlanAttachment,
   RealtimeEventName,
   RealtimeMessage,
 } from '../models/app.models';
 import { AuthService } from './auth.service';
+
+export type { ConnectionStatus, RealtimeEventName, RealtimeMessage };
+
+export type RealtimeEventType = RealtimeEventName;
+
+/** Formato flexible aceptado por `emit()` en pruebas o eventos internos. */
+export interface RealtimeEventInput {
+  event?: RealtimeEventName;
+  type?: RealtimeEventName;
+  data?: unknown;
+  payload?: unknown;
+  plan?: NutritionPlan;
+  planId?: string;
+  id?: string;
+  file?: PlanAttachment;
+  attachment?: PlanAttachment;
+  fileId?: string;
+  actorId?: string | null;
+  at?: string;
+}
 
 /** Código con el que el servidor cierra el canal cuando vence el JWT (no se reintenta). */
 export const CLOSE_TOKEN_EXPIRED = 4401;
@@ -43,11 +65,27 @@ const EVENT_NAMES: readonly RealtimeEventName[] = [
 @Injectable({ providedIn: 'root' })
 export class RealtimeService {
   private auth    = inject(AuthService);
-  private wsUrl   = inject(WS_URL);
+  private wsUrl   = inject(WS_URL, { optional: true }) ?? 'ws://localhost:3000';
   private factory = inject(WEBSOCKET_FACTORY);
 
   private _connectionStatus = signal<ConnectionStatus>('disconnected');
   readonly connectionStatus = this._connectionStatus.asReadonly();
+
+  private _forcedOffline = signal<boolean>(false);
+  private _browserOnline = signal<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  /**
+   * Indica si la app se encuentra efectivamente sin conexión para bloquear acciones de red en la UI:
+   * - El navegador está offline (`navigator.onLine === false`),
+   * - O se forzó el estado `'disconnected'`,
+   * - O hay sesión activa y el canal cayó a `'disconnected'`.
+   */
+  readonly isOffline = computed(() => {
+    if (!this._browserOnline()) return true;
+    if (this._forcedOffline()) return this._connectionStatus() === 'disconnected';
+    const hasToken = Boolean(this.auth.token?.());
+    return hasToken && this._connectionStatus() === 'disconnected';
+  });
 
   private _events = new Subject<RealtimeMessage>();
   /** Todos los mensajes recibidos, ya validados. */
@@ -59,12 +97,36 @@ export class RealtimeService {
   private attempts = 0;
 
   constructor() {
+    const onOnline = () => this._browserOnline.set(true);
+    const onOffline = () => {
+      this._browserOnline.set(false);
+      this._connectionStatus.set('disconnected');
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', onOnline);
+      window.addEventListener('offline', onOffline);
+    }
+
+    let initialized = false;
     effect(() => {
-      const token = this.auth.token();
+      const token = this.auth.token?.() ?? null;
       // connect/disconnect escriben señales: se ejecutan fuera del seguimiento del effect.
-      untracked(() => (token ? this.connect(token) : this.disconnect()));
+      untracked(() => {
+        if (token) {
+          this.connect(token);
+        } else if (initialized || this.currentToken !== null || this.socket !== null) {
+          this.disconnect();
+        }
+        initialized = true;
+      });
     });
-    inject(DestroyRef).onDestroy(() => this.disconnect());
+    inject(DestroyRef).onDestroy(() => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', onOnline);
+        window.removeEventListener('offline', onOffline);
+      }
+      this.disconnect();
+    });
   }
 
   /** Solo los mensajes de los eventos indicados, con su carga útil tipada. */
@@ -72,6 +134,44 @@ export class RealtimeService {
     return this.events$.pipe(
       filter((m): m is Extract<RealtimeMessage, { event: E }> => (names as RealtimeEventName[]).includes(m.event)),
     );
+  }
+
+  /** Publica un evento en `events$` (útil en pruebas unitarias de componentes y servicios). */
+  emit(input: RealtimeMessage | RealtimeEventInput, _broadcast = false): void {
+    const eventName = (input as RealtimeMessage).event ?? (input as RealtimeEventInput).type;
+    if (!eventName) return;
+
+    const raw = input as RealtimeEventInput;
+    let data = raw.data ?? raw.payload;
+    if (!data) {
+      if (raw.plan) data = raw.plan;
+      else if (raw.file || raw.attachment) data = raw.file ?? raw.attachment;
+      else if (eventName === 'plan:deleted' && (raw.planId || raw.id)) data = { id: String(raw.planId ?? raw.id) };
+      else if (eventName === 'plan:file-removed' && raw.fileId) {
+        data = {
+          id: raw.fileId,
+          planId: raw.planId ?? '',
+          name: '',
+          mimeType: '',
+          size: 0,
+          url: '',
+          createdAt: new Date(0).toISOString(),
+        };
+      }
+    }
+
+    this._events.next({
+      event: eventName,
+      data: data as never,
+      actorId: raw.actorId ?? null,
+      at: raw.at ?? new Date().toISOString(),
+    } as RealtimeMessage);
+  }
+
+  /** Permite cambiar `connectionStatus` en pruebas unitarias de UI y resincronización. */
+  setConnectionStatus(status: ConnectionStatus): void {
+    this._forcedOffline.set(status === 'disconnected');
+    this._connectionStatus.set(status);
   }
 
   // ── Conexión ──────────────────────────────────────────────
@@ -87,6 +187,7 @@ export class RealtimeService {
     const token = this.currentToken;
     if (!token) return;
 
+    this._forcedOffline.set(false);
     this._connectionStatus.set('reconnecting');
     let socket: WebSocket;
     try {
@@ -100,6 +201,7 @@ export class RealtimeService {
     socket.onopen = () => {
       if (this.socket !== socket) return;
       this.attempts = 0;
+      this._forcedOffline.set(false);
       this._connectionStatus.set('connected');
     };
     socket.onmessage = event => {
@@ -117,11 +219,11 @@ export class RealtimeService {
   private handleClose(code: number): void {
     if (code === CLOSE_TOKEN_EXPIRED) {
       this._connectionStatus.set('disconnected');
-      this.auth.checkSession(); // si el JWT venció, cierra la sesión y el effect limpia el resto
+      this.auth.checkSession?.(); // si el JWT venció, cierra la sesión y el effect limpia el resto
       return;
     }
     // Un token que dejó de servir no se reintenta (el navegador no ve el 401 del "upgrade").
-    if (this.auth.checkSession() !== 'valid') {
+    if (this.auth.checkSession && this.auth.checkSession() !== 'valid') {
       this._connectionStatus.set('disconnected');
       return;
     }
@@ -144,6 +246,7 @@ export class RealtimeService {
     this.retryTimer = null;
     this.attempts = 0;
     this.currentToken = null;
+    this._forcedOffline.set(false);
 
     const socket = this.socket;
     this.socket = null; // antes de cerrar: así `onclose` sabe que fue intencional

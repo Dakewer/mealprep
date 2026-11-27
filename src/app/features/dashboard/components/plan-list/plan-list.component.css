@@ -136,6 +136,64 @@
   gap: 0.3rem;
 }
 
+.plan__badges-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.attachments-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--clr-primary-700, #15803d);
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-full, 9999px);
+}
+
+/* B3: Cover Thumbnail in Plan Card */
+.plan__cover {
+  display: block;
+  width: 100%;
+  height: 136px;
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  background: var(--clr-light-100, #f3f4f6);
+  border: 1px solid var(--clr-light-200, #e5e7eb);
+  margin-bottom: 0.25rem;
+}
+
+.plan__cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 220ms ease;
+}
+
+.plan:hover .plan__cover-img {
+  transform: scale(1.04);
+}
+
+/* B4: Offline warning banner */
+.offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-lg, 12px);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
 .other-user-badge {
   display: inline-flex;
   align-items: center;

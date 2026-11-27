@@ -40,6 +40,21 @@
     </div>
   </header>
 
+  @if (isOffline()) {
+    <div class="offline-banner" role="alert" data-testid="plan-list-offline-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="1" y1="1" x2="23" y2="23"/>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+        <line x1="12" y1="20" x2="12.01" y2="20"/>
+      </svg>
+      <span>Estás sin conexión. Puedes consultar tus planes en caché, pero las modificaciones requieren conexión.</span>
+    </div>
+  }
+
   <!-- ══ ESTADOS DE UI (B1) ═════════════════════════════════════ -->
 
   <!-- Estado 1: Cargando con Skeleton (B1) -->
@@ -87,6 +102,24 @@
     <ul class="grid" role="list">
       @for (plan of pagedPlans(); track plan.id) {
         <li class="plan">
+          <!-- B3: Miniatura de portada si el plan tiene imagen adjunta -->
+          @if (getCoverImage(plan); as cover) {
+            <a
+              [routerLink]="['/dashboard/planes', plan.id]"
+              class="plan__cover"
+              [attr.aria-label]="'Ver imagen de portada de ' + plan.name"
+              data-testid="plan-cover-link"
+            >
+              <img
+                [src]="resolveAttachmentUrl(cover)"
+                [alt]="'Portada de ' + plan.name"
+                class="plan__cover-img"
+                loading="lazy"
+                data-testid="plan-cover-thumbnail"
+              />
+            </a>
+          }
+
           <div class="plan__head">
             <div class="plan__title-group">
               <h3 class="plan__name">
@@ -94,9 +127,19 @@
                   {{ plan.name }}
                 </a>
               </h3>
-              @if (isOtherUserPlan(plan)) {
-                <span *appHasRole="'admin'" class="other-user-badge">de otro usuario</span>
-              }
+              <div class="plan__badges-row">
+                @if (isOtherUserPlan(plan)) {
+                  <span *appHasRole="'admin'" class="other-user-badge">de otro usuario</span>
+                }
+                @if (attachmentsCount(plan) > 0) {
+                  <span class="attachments-count-badge" data-testid="plan-attachments-badge">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                    <span>{{ attachmentsCount(plan) }}</span>
+                  </span>
+                }
+              </div>
             </div>
             <button
               type="button"

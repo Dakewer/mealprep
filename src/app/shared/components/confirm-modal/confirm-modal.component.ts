@@ -230,12 +230,22 @@ export class ConfirmModalComponent {
   open(itemName?: string): void {
     this.targetItemName.set(itemName ?? '');
     this.isProcessing.set(false);
-    this.dialogRef().nativeElement.showModal();
+    const dialog = this.dialogRef().nativeElement;
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
   }
 
   close(): void {
     this.isProcessing.set(false);
-    this.dialogRef().nativeElement.close();
+    const dialog = this.dialogRef().nativeElement;
+    if (typeof dialog.close === 'function') {
+      dialog.close();
+    } else {
+      dialog.removeAttribute('open');
+    }
     this.cancelled.emit();
   }
 

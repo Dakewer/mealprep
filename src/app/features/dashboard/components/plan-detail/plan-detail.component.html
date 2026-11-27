@@ -72,7 +72,7 @@
       </div>
     }
 
-    <!-- ══ CASO 2: PLAN ENCONTRADO Y DETALLADO ═════════════════ -->
+    <!-- ══ CASO 3: PLAN ENCONTRADO Y DETALLADO ═════════════════ -->
     @else {
       <!-- Breadcrumb -->
       <nav class="breadcrumbs" aria-label="Ruta de navegación">
@@ -149,65 +149,223 @@
         }
       </header>
 
-      <!-- Layout en 2 columnas: Ingredientes vs Macros -->
+      <!-- Layout en 2 columnas: Ingredientes y Galería vs Macros -->
       <div class="detail-grid">
-        <!-- Columna Izquierda: Ingredientes -->
-        <section class="card detail-ingredients-card" aria-labelledby="ingredients-heading">
-          <div class="card-head">
-            <h2 id="ingredients-heading" class="card-head__title">
-              <svg class="heading-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M18 2v20M18 6h3a2 2 0 0 0 2-2V2M2 2v8a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V2M6 14v8"/>
-              </svg>
-              <span>Ingredientes del menú ({{ detailedItems().length }})</span>
-            </h2>
-            <span class="card-head__subtitle">Cantidades y aporte nutricional por porción</span>
-          </div>
+        <div class="detail-left-column">
+          <!-- Columna Izquierda (1): Ingredientes -->
+          <section class="card detail-ingredients-card" aria-labelledby="ingredients-heading">
+            <div class="card-head">
+              <h2 id="ingredients-heading" class="card-head__title">
+                <svg class="heading-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M18 2v20M18 6h3a2 2 0 0 0 2-2V2M2 2v8a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V2M6 14v8"/>
+                </svg>
+                <span>Ingredientes del menú ({{ detailedItems().length }})</span>
+              </h2>
+              <span class="card-head__subtitle">Cantidades y aporte nutricional por porción</span>
+            </div>
 
-          <div class="table-responsive">
-            <table class="ingredients-table" aria-label="Detalle de ingredientes y macronutrientes">
-              <thead>
-                <tr>
-                  <th scope="col">Ingrediente</th>
-                  <th scope="col">Categoría</th>
-                  <th scope="col" class="num-col">Cantidad</th>
-                  <th scope="col" class="num-col">Calorías</th>
-                  <th scope="col" class="num-col">P / C / G</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of detailedItems(); track item.ingredientId) {
+            <div class="table-responsive">
+              <table class="ingredients-table" aria-label="Detalle de ingredientes y macronutrientes">
+                <thead>
                   <tr>
-                    <td class="font-semibold">{{ item.ingredientName }}</td>
-                    <td>
-                      <span class="cat-badge" [class]="categoryColorClass(item.category)">
-                        {{ item.category }}
-                      </span>
-                    </td>
-                    <td class="num-col font-bold">{{ item.grams }} {{ item.unit }}</td>
-                    <td class="num-col text-cal">{{ item.calories }} kcal</td>
-                    <td class="num-col text-macros-small">
-                      <span class="color-p">{{ item.protein }}g</span> /
-                      <span class="color-c">{{ item.carbs }}g</span> /
-                      <span class="color-f">{{ item.fat }}g</span>
+                    <th scope="col">Ingrediente</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col" class="num-col">Cantidad</th>
+                    <th scope="col" class="num-col">Calorías</th>
+                    <th scope="col" class="num-col">P / C / G</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of detailedItems(); track item.ingredientId) {
+                    <tr>
+                      <td class="font-semibold">{{ item.ingredientName }}</td>
+                      <td>
+                        <span class="cat-badge" [class]="categoryColorClass(item.category)">
+                          {{ item.category }}
+                        </span>
+                      </td>
+                      <td class="num-col font-bold">{{ item.grams }} {{ item.unit }}</td>
+                      <td class="num-col text-cal">{{ item.calories }} kcal</td>
+                      <td class="num-col text-macros-small">
+                        <span class="color-p">{{ item.protein }}g</span> /
+                        <span class="color-c">{{ item.carbs }}g</span> /
+                        <span class="color-f">{{ item.fat }}g</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="table-total-row">
+                    <td colspan="2"><strong>Total del plan</strong></td>
+                    <td class="num-col"><strong>{{ plan()!.items.length }} ítems</strong></td>
+                    <td class="num-col text-cal font-extrabold">{{ plan()!.macroGoals.calories }} kcal</td>
+                    <td class="num-col text-macros-small font-bold">
+                      <span class="color-p">{{ plan()!.macroGoals.protein }}g</span> /
+                      <span class="color-c">{{ plan()!.macroGoals.carbs }}g</span> /
+                      <span class="color-f">{{ plan()!.macroGoals.fat }}g</span>
                     </td>
                   </tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+
+          <!-- ══ B3 & B4: SECCIÓN DE ARCHIVOS ADJUNTOS (GALERÍA) ════════ -->
+          <section
+            class="card detail-attachments-card"
+            aria-labelledby="attachments-heading"
+            data-testid="attachments-section"
+          >
+            <div class="card-head attachments-head">
+              <div>
+                <h2 id="attachments-heading" class="card-head__title">
+                  <svg class="heading-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  <span>Archivos adjuntos ({{ attachments().length }})</span>
+                </h2>
+                <span class="card-head__subtitle">Imágenes de referencia y documentos PDF del plan</span>
+              </div>
+            </div>
+
+            <!-- B4: Aviso claro si el usuario está sin conexión o intentó una acción offline -->
+            @if (isOffline() || offlineActionWarning()) {
+              <div class="gallery-offline-alert" role="alert" data-testid="gallery-offline-warning">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                  <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+                  <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+                  <path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+                  <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                  <line x1="12" y1="20" x2="12.01" y2="20"/>
+                </svg>
+                <span>
+                  {{ offlineActionWarning() || 'Sin conexión. Las acciones de descarga y eliminación de archivos requieren conexión activa.' }}
+                </span>
+              </div>
+            }
+
+            <!-- Error de acción puntual (ej. 403 al intentar eliminar archivo ajeno) -->
+            @if (attachmentActionError()) {
+              <div class="gallery-action-error" role="alert" data-testid="gallery-action-error">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>{{ attachmentActionError() }}</span>
+              </div>
+            }
+
+            <!-- B4 · Estado 1: Cargando archivos -->
+            @if (isLoadingAttachments()) {
+              <div class="attachments-state-box" data-testid="attachments-loading">
+                <app-loading-state message="Cargando archivos adjuntos…" />
+              </div>
+            }
+
+            <!-- B4 · Estado 2: Error en la lista de archivos -->
+            @else if (attachmentsError()) {
+              <div class="attachments-state-box" data-testid="attachments-error">
+                <app-error-state
+                  title="No pudimos cargar los archivos adjuntos"
+                  [message]="attachmentsError()!.message || 'Ocurrió un error al consultar los adjuntos de este plan.'"
+                  retryLabel="Reintentar carga"
+                  (retry)="retryLoadAttachments()"
+                />
+              </div>
+            }
+
+            <!-- B4 · Estado 3: Lista vacía ("Este plan aún no tiene archivos adjuntos") -->
+            @else if (attachments().length === 0) {
+              <div class="attachments-state-box" data-testid="attachments-empty">
+                <app-empty-state
+                  title="Este plan aún no tiene archivos adjuntos"
+                  message="Cuando se agreguen fotografías o guías en PDF a este plan, podrás visualizarlas o descargarlas desde aquí."
+                />
+              </div>
+            }
+
+            <!-- B3 · Galería de archivos adjuntos (Imágenes con miniatura y PDF con tarjeta) -->
+            @else {
+              <ul class="attachments-grid" role="list" data-testid="attachments-list">
+                @for (att of attachments(); track att.id) {
+                  <li class="attachment-card" [class.attachment-card--pdf]="isPdfAttachment(att)" data-testid="attachment-item">
+                    @if (isImageAttachment(att)) {
+                      <div class="attachment-card__thumb-wrap">
+                        <img
+                          [src]="resolveAttachmentUrl(att)"
+                          [alt]="att.name"
+                          class="attachment-card__thumb"
+                          loading="lazy"
+                          data-testid="attachment-image-thumb"
+                        />
+                      </div>
+                    } @else {
+                      <div class="attachment-card__pdf-icon" aria-hidden="true" data-testid="attachment-pdf-badge">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                          <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        <span class="pdf-tag">{{ formatFileType(att) }}</span>
+                      </div>
+                    }
+
+                    <div class="attachment-card__body">
+                      <p class="attachment-card__name" [title]="att.name" data-testid="attachment-name">
+                        {{ att.name }}
+                      </p>
+                      <p class="attachment-card__meta" data-testid="attachment-meta">
+                        <span class="attachment-type-pill">{{ formatFileType(att) }}</span>
+                        <span>·</span>
+                        <span class="attachment-size">{{ formatFileSize(att.size) }}</span>
+                      </p>
+                    </div>
+
+                    <div class="attachment-card__actions">
+                      <button
+                        type="button"
+                        class="btn btn--outline btn--sm attachment-card__btn"
+                        (click)="openOrDownloadAttachment(att)"
+                        [attr.aria-label]="'Abrir o descargar ' + att.name"
+                        data-testid="download-attachment-btn"
+                        appRipple
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="7 10 12 15 17 10"/>
+                          <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <span>Descargar</span>
+                      </button>
+
+                      <!-- B3: Botón eliminar protegido con *appCanManage="plan()!" y ConfirmModalComponent -->
+                      <button
+                        *appCanManage="plan()!"
+                        type="button"
+                        class="btn btn--ghost-dark btn--sm attachment-card__btn attachment-card__btn--delete"
+                        (click)="requestDeleteAttachment(att)"
+                        [attr.aria-label]="'Eliminar archivo ' + att.name"
+                        data-testid="delete-attachment-btn"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          <line x1="10" y1="11" x2="10" y2="17"/>
+                          <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </li>
                 }
-              </tbody>
-              <tfoot>
-                <tr class="table-total-row">
-                  <td colspan="2"><strong>Total del plan</strong></td>
-                  <td class="num-col"><strong>{{ plan()!.items.length }} ítems</strong></td>
-                  <td class="num-col text-cal font-extrabold">{{ plan()!.macroGoals.calories }} kcal</td>
-                  <td class="num-col text-macros-small font-bold">
-                    <span class="color-p">{{ plan()!.macroGoals.protein }}g</span> /
-                    <span class="color-c">{{ plan()!.macroGoals.carbs }}g</span> /
-                    <span class="color-f">{{ plan()!.macroGoals.fat }}g</span>
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </section>
+              </ul>
+            }
+          </section>
+        </div>
 
         <!-- Columna Derecha: Macros & Acciones -->
         <aside class="detail-sidebar" aria-label="Resumen nutricional y acciones">
@@ -330,11 +488,12 @@
 
         <app-file-uploader
           [planId]="plan()!.id"
+          [connectionOffline]="isOffline()"
           (uploaded)="onFileUploaded($event)"
         />
       </section>
 
-      <!-- Modal accesible de confirmación para eliminar (B4) -->
+      <!-- Modal accesible de confirmación para eliminar plan (B4) -->
       <app-confirm-modal
         #confirmModal
         title="¿Deseas eliminar este plan?"
@@ -342,6 +501,17 @@
         cancelLabel="Cancelar"
         variant="danger"
         (confirmed)="onDeleteConfirmed()"
+      />
+
+      <!-- B3: Modal accesible de confirmación para eliminar archivo adjunto -->
+      <app-confirm-modal
+        #deleteAttachmentModal
+        title="¿Eliminar archivo adjunto?"
+        confirmLabel="Sí, eliminar archivo"
+        cancelLabel="Cancelar"
+        variant="danger"
+        (confirmed)="onDeleteAttachmentConfirmed()"
+        (cancelled)="onDeleteAttachmentCancelled()"
       />
     }
   </main>

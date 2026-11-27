@@ -191,6 +191,167 @@
   align-items: start;
 }
 
+.detail-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* B3 & B4: Attachments Gallery Section */
+.gallery-offline-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-lg, 12px);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.gallery-action-error {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-lg, 12px);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.attachments-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.attachment-card {
+  border: 1px solid var(--clr-light-200, #e5e7eb);
+  border-radius: var(--radius-xl, 16px);
+  background: var(--clr-light-50, #f9fafb);
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.attachment-card:hover {
+  border-color: var(--clr-primary-300, #86efac);
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06);
+}
+
+.attachment-card__thumb-wrap {
+  width: 100%;
+  height: 132px;
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  background: #e5e7eb;
+  border: 1px solid var(--clr-light-200, #e5e7eb);
+}
+
+.attachment-card__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.attachment-card__pdf-icon {
+  width: 100%;
+  height: 96px;
+  border-radius: var(--radius-lg, 12px);
+  background: #fef2f2;
+  border: 1px dashed #fecaca;
+  color: #dc2626;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.pdf-tag {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.attachment-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.attachment-card__name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-on-light, #111827);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-card__meta {
+  font-size: 0.75rem;
+  color: var(--text-on-light-3, #6b7280);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.attachment-type-pill {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.attachment-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.attachment-card__btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.attachment-card__btn--delete {
+  flex: 0 0 auto;
+  padding-inline: 0.55rem;
+  color: var(--clr-error, #ef4444);
+}
+
+.attachment-card__btn--delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 .card {
   background: #fff;
   border: 1px solid var(--clr-light-200, #e5e7eb);
